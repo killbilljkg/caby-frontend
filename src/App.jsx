@@ -7,7 +7,7 @@ function App() {
     const [location, setLocation] = useState(null);
     const [path, setPath] = useState([]);
     const [status, setStatus] = useState('Disconnected');
-    const [socketUrl, setSocketUrl] = useState('ws://16.170.219.54:8082/ws/admin');
+    const [socketUrl, setSocketUrl] = useState('ws://caby-api.story-labs.in/ws/admin');
     const [ws, setWs] = useState(null);
 
     const handleConnect = () => {
