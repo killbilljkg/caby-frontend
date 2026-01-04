@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap, CircleMarker } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -31,6 +31,65 @@ const MapComponent = ({ location, path }) => {
         ? [location.lat, location.lng]
         : [51.505, -0.09];
 
+    // Helper to get event index
+    const getEventIndex = (type) => path.findIndex(p => p.event_type === type);
+
+    const startIndex = getEventIndex('START');
+    const pickupIndex = getEventIndex('PICKUP');
+    const dropoffIndex = getEventIndex('DROPOFF');
+    const endIndex = getEventIndex('END');
+
+    // Segments
+    const segments = [];
+
+    // 1. Start -> Pickup (Blue)
+    // If START exists, start from there. Otherwise start from 0.
+    // Go until PICKUP if it exists, otherwise go to end of path.
+    let seg1Start = startIndex !== -1 ? startIndex : 0;
+    let seg1End = pickupIndex !== -1 ? pickupIndex : path.length - 1;
+
+    // Only add if we have points and logic holds (path could be empty or before start)
+    if (path.length > 0) {
+        segments.push({
+            positions: path.slice(seg1Start, seg1End + 1)
+                .filter(p => p.lat !== undefined && p.lng !== undefined)
+                .map(p => [p.lat, p.lng]),
+            color: 'blue'
+        });
+    }
+
+    // 2. Pickup -> Dropoff (Red)
+    if (pickupIndex !== -1) {
+        let seg2End = dropoffIndex !== -1 ? dropoffIndex : path.length - 1;
+        segments.push({
+            positions: path.slice(pickupIndex, seg2End + 1)
+                .filter(p => p.lat !== undefined && p.lng !== undefined)
+                .map(p => [p.lat, p.lng]),
+            color: 'red'
+        });
+    }
+
+    // 3. Dropoff -> End (Blue)
+    if (dropoffIndex !== -1) {
+        let seg3End = endIndex !== -1 ? endIndex : path.length - 1;
+        segments.push({
+            positions: path.slice(dropoffIndex, seg3End + 1)
+                .filter(p => p.lat !== undefined && p.lng !== undefined)
+                .map(p => [p.lat, p.lng]),
+            color: 'blue'
+        });
+    }
+
+    const getEventColor = (type) => {
+        switch (type) {
+            case 'START': return 'green';
+            case 'PICKUP': return 'blue';
+            case 'DROPOFF': return 'red';
+            case 'END': return 'black';
+            default: return 'gray';
+        }
+    };
+
     return (
         <MapContainer center={center} zoom={15} style={{ height: '100%', width: '100%' }}>
             <TileLayer
@@ -49,9 +108,31 @@ const MapComponent = ({ location, path }) => {
                     <RecenterMap location={location} />
                 </>
             )}
-            {path.length > 1 && (
-                <Polyline positions={path.filter(p => p.lat !== undefined && p.lng !== undefined).map(p => [p.lat, p.lng])} color="blue" />
-            )}
+
+            {/* Render Segments */}
+            {segments.map((seg, i) => (
+                seg.positions.length > 1 && (
+                    <Polyline key={`seg-${i}`} positions={seg.positions} color={seg.color} />
+                )
+            ))}
+
+            {/* Render Event Markers */}
+            {path.map((point, index) => (
+                point.event_type && point.lat !== undefined && point.lng !== undefined ? (
+                    <CircleMarker
+                        key={`event-${index}`}
+                        center={[point.lat, point.lng]}
+                        pathOptions={{ color: getEventColor(point.event_type), fillColor: getEventColor(point.event_type), fillOpacity: 0.8 }}
+                        radius={6}
+                    >
+                        <Popup>
+                            Event: {point.event_type} <br />
+                            Lat: {point.lat.toFixed(4)} <br />
+                            Lng: {point.lng.toFixed(4)}
+                        </Popup>
+                    </CircleMarker>
+                ) : null
+            ))}
         </MapContainer>
     );
 };
