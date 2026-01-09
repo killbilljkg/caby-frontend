@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import MapComponent from './components/MapComponent';
+import Sidebar from './components/Sidebar';
+import Drivers from './components/Drivers';
 import { connectWebSocket } from './services/socket';
 import './App.css';
 
 function App() {
+    const [activePage, setActivePage] = useState('home'); // 'home' | 'drivers'
     const [location, setLocation] = useState(null);
     const [path, setPath] = useState([]);
     const [status, setStatus] = useState('Disconnected');
@@ -48,29 +51,46 @@ function App() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []); // Run once on mount
 
+    const renderContent = () => {
+        switch (activePage) {
+            case 'drivers':
+                return <Drivers />;
+            case 'home':
+            default:
+                return (
+                    <>
+                        <header className="app-header">
+                            <h1>Real-time Location Tracker</h1>
+                            <div className="controls">
+                                <input
+                                    type="text"
+                                    value={socketUrl}
+                                    onChange={(e) => setSocketUrl(e.target.value)}
+                                    placeholder="ws://localhost:8081"
+                                    disabled={status === 'Connected'}
+                                />
+                                <button onClick={handleConnect}>
+                                    {status === 'Connected' ? 'Disconnect' : 'Connect'}
+                                </button>
+                            </div>
+                            <div className={`status-indicator ${status.toLowerCase()}`}>
+                                {status}
+                            </div>
+                        </header>
+                        <main className="map-wrapper">
+                            <MapComponent location={location} path={path} />
+                        </main>
+                    </>
+                );
+        }
+    };
+
     return (
-        <div className="app-container">
-            <header className="app-header">
-                <h1>Real-time Location Tracker</h1>
-                <div className="controls">
-                    <input
-                        type="text"
-                        value={socketUrl}
-                        onChange={(e) => setSocketUrl(e.target.value)}
-                        placeholder="ws://localhost:8081"
-                        disabled={status === 'Connected'}
-                    />
-                    <button onClick={handleConnect}>
-                        {status === 'Connected' ? 'Disconnect' : 'Connect'}
-                    </button>
-                </div>
-                <div className={`status-indicator ${status.toLowerCase()}`}>
-                    {status}
-                </div>
-            </header>
-            <main className="map-wrapper">
-                <MapComponent location={location} path={path} />
-            </main>
+        <div className="app-root">
+            <Sidebar activePage={activePage} onNavigate={setActivePage} />
+            <div className="main-content">
+                {renderContent()}
+            </div>
         </div>
     );
 }
