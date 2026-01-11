@@ -419,3 +419,47 @@
     margin: 10px 0 0;
     color: #646cff;
 }
+
+/* Trip Detail Styles */
+.trip-summary-panel {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+    background-color: #242424;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    border: 1px solid #333;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 20px;
+}
+
+.summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.summary-item label {
+    font-size: 0.8rem;
+    color: #aaa;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.summary-item span {
+    font-weight: 600;
+    color: #fff;
+    font-size: 1rem;
+}
+
+.history-row:hover {
+    background-color: #2a2a2a !important;
+    /* Adjusted for dark mode theme compatibility */
+}

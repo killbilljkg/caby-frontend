@@ -10,17 +10,6 @@ const Sidebar = ({ activePage, onNavigate }) => {
             <nav className="sidebar-menu">
                 <ul>
                     <li
-                        className={activePage === 'home' ? 'active' : ''}
-                        onClick={() => onNavigate('home')}
-                    >
-                        <span className="icon">🏠</span>
-                        <span className="label">Home</span>
-                    </li>
-                    <li>
-                        <span className="icon">📊</span>
-                        <span className="label">Reports</span>
-                    </li>
-                    <li
                         className={activePage === 'live-tracking' ? 'active' : ''}
                         onClick={() => onNavigate('live-tracking')}
                     >
@@ -34,9 +23,19 @@ const Sidebar = ({ activePage, onNavigate }) => {
                         <span className="icon">👥</span>
                         <span className="label">Drivers</span>
                     </li>
-                    <li>
-                        <span className="icon">⚙️</span>
-                        <span className="label">Settings</span>
+                    <li
+                        className={activePage === 'assign-driver' ? 'active' : ''}
+                        onClick={() => onNavigate('assign-driver')}
+                    >
+                        <span className="icon">🚕</span>
+                        <span className="label">Assign Driver</span>
+                    </li>
+                    <li
+                        className={activePage === 'history' ? 'active' : ''}
+                        onClick={() => onNavigate('history')}
+                    >
+                        <span className="icon">📜</span>
+                        <span className="label">History</span>
                     </li>
                 </ul>
             </nav>

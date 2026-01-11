@@ -15,14 +15,21 @@ const carIcon = L.icon({
     popupAnchor: [0, -20]
 });
 
-// Component to recenter map when location changes
-function RecenterMap({ location }) {
+// Component to recenter map when location changes or fit bounds to path
+function RecenterMap({ location, path }) {
     const map = useMap();
+
     useEffect(() => {
-        if (location && location.lat !== undefined && location.lng !== undefined) {
+        if (path && path.length > 0) {
+            const bounds = L.latLngBounds(path.map(p => [p.lat, p.lng]));
+            if (bounds.isValid()) {
+                map.fitBounds(bounds, { padding: [50, 50] });
+            }
+        } else if (location && location.lat !== undefined && location.lng !== undefined) {
             map.setView([location.lat, location.lng]);
         }
-    }, [location, map]);
+    }, [location, path, map]);
+
     return null;
 }
 
@@ -105,7 +112,7 @@ const MapComponent = ({ location, path }) => {
                             Lng: {location.lng.toFixed(4)}
                         </Popup>
                     </Marker>
-                    <RecenterMap location={location} />
+                    <RecenterMap location={location} path={path} />
                 </>
             )}
 
