@@ -21,6 +21,13 @@ const Sidebar = ({ activePage, onNavigate }) => {
                         <span className="label">Reports</span>
                     </li>
                     <li
+                        className={activePage === 'live-tracking' ? 'active' : ''}
+                        onClick={() => onNavigate('live-tracking')}
+                    >
+                        <span className="icon">📡</span>
+                        <span className="label">Live Tracking</span>
+                    </li>
+                    <li
                         className={activePage === 'drivers' ? 'active' : ''}
                         onClick={() => onNavigate('drivers')}
                     >
