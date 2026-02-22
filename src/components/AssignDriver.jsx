@@ -1,4 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
+import { FiUserPlus, FiCheck, FiX, FiSearch } from 'react-icons/fi';
+import toast from 'react-hot-toast';
 import '../App.css';
 
 const AssignDriver = () => {
@@ -12,6 +15,7 @@ const AssignDriver = () => {
     const [loadingDrivers, setLoadingDrivers] = useState(false);
     const [selectedTripId, setSelectedTripId] = useState(null);
     const [assigning, setAssigning] = useState(false);
+    const [driverSearchTerm, setDriverSearchTerm] = useState('');
 
     const fetchPendingTrips = async () => {
         setLoading(true);
@@ -46,6 +50,7 @@ const AssignDriver = () => {
         setSelectedTripId(tripId);
         setShowModal(true);
         setLoadingDrivers(true);
+        setDriverSearchTerm(''); // Reset search
         try {
             // Fetch drivers to choose from
             const response = await fetch('http://16.170.219.54:8081/api/v1/drivers');
@@ -55,7 +60,7 @@ const AssignDriver = () => {
             // For now, let's show all, or maybe sort Active to top
             setDrivers(Array.isArray(data) ? data : []);
         } catch (err) {
-            alert('Failed to load drivers list');
+            toast.error('Failed to load drivers list');
             setShowModal(false);
         } finally {
             setLoadingDrivers(false);
@@ -82,7 +87,7 @@ const AssignDriver = () => {
             }
 
             // Success
-            alert('Driver assigned successfully!');
+            toast.success('Driver assigned successfully!');
             setShowModal(false);
             setSelectedTripId(null);
 
@@ -91,21 +96,28 @@ const AssignDriver = () => {
 
         } catch (err) {
             console.error(err);
-            alert(`Error: ${err.message}`);
+            toast.error(`Error: ${err.message} `);
         } finally {
             setAssigning(false);
         }
     };
 
-    if (loading) return <div className="page-container">Loading pending trips...</div>;
-    if (error) return <div className="page-container error-message">Error: {error}</div>;
+    // Filter drivers for modal
+    const filteredDrivers = drivers.filter(driver =>
+        (driver.name && driver.name.toLowerCase().includes(driverSearchTerm.toLowerCase())) ||
+        (driver.vehicleNumber && driver.vehicleNumber.toLowerCase().includes(driverSearchTerm.toLowerCase()))
+    );
+
+    if (loading) return <div className="page-container drivers-page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading pending trips...</div>;
+    if (error) return <div className="page-container drivers-page error-message">Error: {error}</div>;
 
     return (
-        <div className="page-container">
+        <div className="page-container drivers-page">
             <header className="page-header">
                 <h2>Assign Driver</h2>
             </header>
-            <div className="table-wrapper">
+
+            <div className="table-wrapper" style={{ background: 'transparent', border: 'none' }}>
                 <table className="data-table">
                     <thead>
                         <tr>
@@ -120,7 +132,9 @@ const AssignDriver = () => {
                     <tbody>
                         {pendingTrips.length === 0 ? (
                             <tr>
-                                <td colSpan="6" style={{ textAlign: 'center' }}>No pending trips found.</td>
+                                <td colSpan="6" style={{ textAlign: 'center', padding: '2rem', background: '#ffffff', borderRadius: '8px' }}>
+                                    No pending trips found.
+                                </td>
                             </tr>
                         ) : (
                             pendingTrips.map((audit) => {
@@ -133,7 +147,7 @@ const AssignDriver = () => {
 
                                 return (
                                     <tr key={id}>
-                                        <td>{id}</td>
+                                        <td style={{ fontWeight: '500' }}>#{id ? id.toString().slice(-6) : 'N/A'}</td>
                                         <td>{passenger || 'N/A'}</td>
                                         <td>{from || 'N/A'}</td>
                                         <td>{to || 'N/A'}</td>
@@ -148,10 +162,11 @@ const AssignDriver = () => {
                                         <td>
                                             <button
                                                 className="btn-primary"
-                                                style={{ padding: '6px 12px', fontSize: '0.9rem' }}
+                                                style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '8px' }}
                                                 onClick={() => handleOpenAssignModal(id)}
+                                                title="Assign Driver"
                                             >
-                                                Assign
+                                                <FiUserPlus /> Assign
                                             </button>
                                         </td>
                                     </tr>
@@ -168,15 +183,34 @@ const AssignDriver = () => {
                     <div className="modal-content" style={{ maxWidth: '600px', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
                         <div className="modal-header">
                             <h3>Select Driver</h3>
-                            <button className="close-button" onClick={() => setShowModal(false)}>&times;</button>
+                            <button className="close-button" onClick={() => setShowModal(false)}><FiX /></button>
+                        </div>
+
+                        {/* Search in Modal */}
+                        <div className="search-container" style={{ marginBottom: '1rem' }}>
+                            <span className="search-icon" style={{ left: '15px' }}>🔍</span>
+                            <input
+                                type="text"
+                                className="search-input"
+                                style={{ width: '100%', boxSizing: 'border-box' }}
+                                placeholder="Search driver by name or vehicle..."
+                                value={driverSearchTerm}
+                                onChange={(e) => setDriverSearchTerm(e.target.value)}
+                            />
                         </div>
 
                         <div style={{ flex: 1, overflowY: 'auto', marginBottom: '1rem' }}>
                             {loadingDrivers ? (
-                                <p>Loading drivers...</p>
+                                <p style={{ textAlign: 'center', padding: '1rem' }}>Loading drivers...</p>
                             ) : (
                                 <table className="data-table" style={{ fontSize: '0.9rem' }}>
-                                    <thead>
+                                    <thead style={{ position: 'sticky', top: 0, background: '#ffffff', zIndex: 1 }}>
+                                        {/* Note: In modal we might want dark or light? 
+                                            If drivers-page class spans, modal might be white. 
+                                            Let's check styling. Modal content usually has own BG. 
+                                            If modal is dark, we need dark table. 
+                                            Let's assume modal follows app theme or its own override. 
+                                        */}
                                         <tr>
                                             <th>Name</th>
                                             <th>Vehicle</th>
@@ -184,9 +218,9 @@ const AssignDriver = () => {
                                             <th>Action</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
-                                        {drivers.map(driver => (
-                                            <tr key={driver.id || driver._id}>
+                                    <tbody className="modal-table-body">
+                                        {filteredDrivers.map(driver => (
+                                            <tr key={driver.id || driver._id} style={{ background: 'transparent', borderBottom: '1px solid #eee' }}>
                                                 <td>{driver.name}</td>
                                                 <td>{driver.vehicleType} - {driver.vehicleNumber}</td>
                                                 <td>
@@ -200,18 +234,22 @@ const AssignDriver = () => {
                                                 </td>
                                                 <td>
                                                     <button
-                                                        className="btn-primary"
-                                                        style={{ padding: '4px 10px', fontSize: '0.8rem' }}
-                                                        disabled={assigning}
+                                                        className="btn-icon"
+                                                        style={{ color: '#4caf50' }}
                                                         onClick={() => handleConfirmAssign(driver.id || driver._id)}
+                                                        disabled={assigning}
+                                                        title="Select"
                                                     >
-                                                        {assigning ? '...' : 'Select'}
+                                                        <FiCheck size={20} />
                                                     </button>
                                                 </td>
                                             </tr>
                                         ))}
                                     </tbody>
                                 </table>
+                            )}
+                            {!loadingDrivers && filteredDrivers.length === 0 && (
+                                <p style={{ textAlign: 'center', color: '#888', padding: '1rem' }}>No drivers found.</p>
                             )}
                         </div>
 

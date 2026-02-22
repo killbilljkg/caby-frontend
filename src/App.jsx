@@ -44,10 +44,8 @@ function App() {
                 const tripId = data.trip_id || data.tripId;
 
                 // Update map ONLY if this data belongs to the selected driver
+                // Update map ONLY if this data belongs to the selected driver
                 if (selectedDriverIdRef.current && driverId === selectedDriverIdRef.current) {
-                    setLocation(formattedData);
-                    setPath((prevPath) => [...prevPath, formattedData]);
-                } else if (!selectedDriverIdRef.current) {
                     setLocation(formattedData);
                     setPath((prevPath) => [...prevPath, formattedData]);
                 }
@@ -277,7 +275,7 @@ function App() {
                                         >
                                             <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>Driver ID: {driver.driverId}</div>
                                             <div style={{ fontSize: '0.85rem', color: '#aaa' }}>Trip ID: {driver.tripId || 'N/A'}</div>
-                                            <div style={{ fontSize: '0.8rem', color: '#646cff', marginTop: '6px' }}>
+                                            <div style={{ fontSize: '0.8rem', color: 'white', marginTop: '6px' }}>
                                                 {driver.status || 'Live'} • {driver.speed ? `${driver.speed} km/h` : ''}
                                             </div>
                                         </div>
@@ -289,19 +287,11 @@ function App() {
                             <header className="app-header">
                                 <h1>Real-time Location Tracker</h1>
                                 <div className="controls">
-                                    <input
-                                        type="text"
-                                        value={socketUrl}
-                                        onChange={(e) => setSocketUrl(e.target.value)}
-                                        placeholder="ws://localhost:8081"
-                                        disabled={status === 'Connected'}
+                                    <div
+                                        className={`led-button ${status.toLowerCase()}`}
+                                        onClick={handleConnect}
+                                        title={status === 'Connected' ? 'Connected (Click to Disconnect)' : 'Disconnected (Click to Connect)'}
                                     />
-                                    <button onClick={handleConnect}>
-                                        {status === 'Connected' ? 'Disconnect' : 'Connect'}
-                                    </button>
-                                </div>
-                                <div className={`status-indicator ${status.toLowerCase()}`}>
-                                    {status}
                                 </div>
                             </header>
                             <main className="map-wrapper" style={{ flex: 1 }}>
@@ -331,9 +321,21 @@ function App() {
         }
     };
 
+    const handleNavigation = (page) => {
+        if (page === 'live-tracking') {
+            // Clear map state
+            setPath([]);
+            setLocation(null);
+            setTripSummary(null);
+            setSelectedDriverId(null);
+            selectedDriverIdRef.current = null;
+        }
+        setActivePage(page);
+    };
+
     return (
         <div className="app-root">
-            <Sidebar activePage={activePage} onNavigate={setActivePage} />
+            <Sidebar activePage={activePage} onNavigate={handleNavigation} />
             <div className="main-content">
                 {renderContent()}
             </div>

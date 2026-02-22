@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { FiSearch, FiEye } from 'react-icons/fi';
 import '../App.css';
 
 const History = ({ onSelectTrip }) => {
     const [audits, setAudits] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
         const fetchAudits = async () => {
@@ -26,41 +28,60 @@ const History = ({ onSelectTrip }) => {
         fetchAudits();
     }, []);
 
-    if (loading) return <div className="page-container">Loading history...</div>;
-    if (error) return <div className="page-container error-message">Error: {error}</div>;
+    // Filter audits based on search term
+    const filteredAudits = audits.filter(audit => {
+        const term = searchTerm.toLowerCase();
+        return (
+            (audit.driverId && audit.driverId.toLowerCase().includes(term)) ||
+            (audit.passengerName && audit.passengerName.toLowerCase().includes(term)) ||
+            (audit.fromLocation && audit.fromLocation.toLowerCase().includes(term)) ||
+            (audit.toLocation && audit.toLocation.toLowerCase().includes(term))
+        );
+    });
+
+    if (loading) return <div className="page-container drivers-page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading history...</div>;
+    if (error) return <div className="page-container drivers-page error-message">Error: {error}</div>;
 
     return (
-        <div className="page-container">
+        <div className="page-container drivers-page">
             <header className="page-header">
                 <h2>Trip History</h2>
+                <div className="search-container">
+                    <span className="search-icon">🔍</span>
+                    <input
+                        type="text"
+                        className="search-input"
+                        placeholder="Search history..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
             </header>
-            <div className="table-wrapper">
+            <div className="table-wrapper" style={{ background: 'transparent', border: 'none' }}>
                 <table className="data-table">
                     <thead>
                         <tr>
                             <th>Driver ID</th>
-                            <th>Passenger Name</th>
+                            <th>Passenger</th>
                             <th>From</th>
                             <th>To</th>
                             <th>Status</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {audits.length === 0 ? (
+                        {filteredAudits.length === 0 ? (
                             <tr>
-                                <td colSpan="5" style={{ textAlign: 'center' }}>No history found.</td>
+                                <td colSpan="6" style={{ textAlign: 'center', padding: '2rem', background: '#ffffff', borderRadius: '8px' }}>
+                                    No history found matching "{searchTerm}".
+                                </td>
                             </tr>
                         ) : (
-                            audits.map((audit) => (
-                                <tr
-                                    key={audit.id}
-                                    onClick={() => onSelectTrip(audit.id)}
-                                    style={{ cursor: 'pointer' }}
-                                    className="history-row"
-                                >
+                            filteredAudits.map((audit) => (
+                                <tr key={audit.id} className="history-row">
                                     <td>
-                                        <div className="driver-name-cell">
-                                            {audit.driverId}
+                                        <div style={{ fontWeight: '500', color: '#333' }}>
+                                            {audit.driverId || 'N/A'}
                                         </div>
                                     </td>
                                     <td>{audit.passengerName || 'N/A'}</td>
@@ -73,6 +94,16 @@ const History = ({ onSelectTrip }) => {
                                         }}>
                                             {audit.currentStatus || 'N/A'}
                                         </span>
+                                    </td>
+                                    <td>
+                                        <button
+                                            className="btn-icon"
+                                            onClick={() => onSelectTrip(audit.id)}
+                                            title="View Details"
+                                            style={{ color: '#333' }}
+                                        >
+                                            <FiEye />
+                                        </button>
                                     </td>
                                 </tr>
                             ))

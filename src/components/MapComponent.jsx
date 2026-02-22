@@ -36,7 +36,7 @@ function RecenterMap({ location, path }) {
 const MapComponent = ({ location, path }) => {
     const center = (location && location.lat !== undefined && location.lng !== undefined)
         ? [location.lat, location.lng]
-        : [51.505, -0.09];
+        : [11.9823564, 75.3616223]; // Mangattuparamba, Kerala
 
     // Helper to get event index
     const getEventIndex = (type) => path.findIndex(p => p.event_type === type);

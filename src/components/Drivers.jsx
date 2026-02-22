@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
+import { FiEdit2, FiTrash2 } from 'react-icons/fi';
 import '../App.css'; // Reusing global styles for now, but will verify table styles
 
 const Drivers = () => {
@@ -19,6 +21,8 @@ const Drivers = () => {
     });
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
+
+    const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
         fetchDrivers();
@@ -50,6 +54,12 @@ const Drivers = () => {
             default: return { backgroundColor: '#f5f5f5', color: '#666' };
         }
     };
+
+    const filteredDrivers = drivers.filter(driver =>
+        (driver.name && driver.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (driver.phoneNumber && driver.phoneNumber.includes(searchTerm)) ||
+        (driver.vehicleNumber && driver.vehicleNumber.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -84,9 +94,9 @@ const Drivers = () => {
             if (!response.ok) throw new Error('Failed to delete driver');
 
             setDrivers(prev => prev.filter(d => (d.id || d._id) !== id));
-            alert('Driver deleted successfully');
+            toast.success('Driver deleted successfully');
         } catch (err) {
-            alert(err.message);
+            toast.error(err.message);
         }
     };
 
@@ -135,7 +145,7 @@ const Drivers = () => {
             fetchDrivers();
 
             setShowModal(false);
-            alert(`Driver ${isEditMode ? 'updated' : 'created'} successfully!`);
+            toast.success(`Driver ${isEditMode ? 'updated' : 'created'} successfully!`);
 
             // Reset form for next use (though modal closes)
             setFormData({
@@ -155,15 +165,27 @@ const Drivers = () => {
     };
 
     return (
-        <div className="page-container">
+        <div className="page-container drivers-page">
             <header className="page-header">
                 <h2>All Drivers</h2>
-                <button className="btn-primary" onClick={openAddModal}>
-                    + Add Driver
-                </button>
+                <div className="actions-header">
+                    <div className="search-container">
+                        <span className="search-icon">🔍</span>
+                        <input
+                            type="text"
+                            className="search-input"
+                            placeholder="Search drivers..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                    <button className="btn-primary" onClick={openAddModal}>
+                        + Add Driver
+                    </button>
+                </div>
             </header>
 
-            <div className="table-wrapper">
+            <div className="table-wrapper" style={{ background: 'transparent', border: 'none' }}>
                 {loading ? (
                     <div style={{ padding: '2rem', textAlign: 'center', color: '#888' }}>
                         Loading drivers...
@@ -175,19 +197,20 @@ const Drivers = () => {
                                 <th>Name</th>
                                 <th>Phone</th>
                                 <th>Vehicle Type</th>
+                                <th>Vehicle No.</th>
                                 <th>Status</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {drivers.length === 0 ? (
+                            {filteredDrivers.length === 0 ? (
                                 <tr>
-                                    <td colSpan="5" style={{ textAlign: 'center', padding: '2rem' }}>
-                                        No drivers found.
+                                    <td colSpan="6" style={{ textAlign: 'center', padding: '2rem', background: '#2a2a2a', borderRadius: '8px' }}>
+                                        No drivers found matching "{searchTerm}".
                                     </td>
                                 </tr>
                             ) : (
-                                drivers.map((driver) => (
+                                filteredDrivers.map((driver) => (
                                     <tr key={driver.id || driver._id}>
                                         <td>
                                             <div className="driver-name-cell">
@@ -199,6 +222,7 @@ const Drivers = () => {
                                         </td>
                                         <td>{driver.phoneNumber || driver.phone}</td>
                                         <td>{driver.vehicleType}</td>
+                                        <td>{driver.vehicleNumber || 'N/A'}</td>
                                         <td>
                                             <span className="status-badge" style={getStatusStyle(driver.status)}>
                                                 {driver.status || 'Inactive'}
@@ -211,14 +235,14 @@ const Drivers = () => {
                                                     title="Edit"
                                                     onClick={() => handleEdit(driver)}
                                                 >
-                                                    ✏️
+                                                    <FiEdit2 />
                                                 </button>
                                                 <button
                                                     className="btn-icon delete"
                                                     title="Delete"
                                                     onClick={() => handleDelete(driver.id || driver._id)}
                                                 >
-                                                    🗑️
+                                                    <FiTrash2 />
                                                 </button>
                                             </div>
                                         </td>

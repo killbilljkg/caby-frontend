@@ -18,14 +18,14 @@
     padding: 8px 16px;
     border-radius: 4px;
     border: none;
-    background: #646cff;
-    color: white;
+    background: #ffffff !important;
+    color: #000000 !important;
     cursor: pointer;
     font-weight: bold;
 }
 
 .controls button:hover {
-    background: #535bf2;
+    background: #e0e0e0;
 }
 
 .controls input:disabled {
@@ -33,10 +33,40 @@
     cursor: not-allowed;
 }
 
+/* LED Connection Button */
+.led-button {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid #555;
+    cursor: pointer;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+    transition: all 0.3s ease;
+    padding: 0;
+    /* Override default button padding */
+}
+
+.led-button:hover {
+    transform: scale(1.1);
+}
+
+.led-button.connected {
+    background-color: #2ecc71;
+    box-shadow: 0 0 10px #2ecc71, inset 0 0 5px rgba(255, 255, 255, 0.5);
+    border-color: #27ae60;
+}
+
+.led-button.disconnected,
+.led-button.error {
+    background-color: #e74c3c;
+    box-shadow: 0 0 10px #e74c3c, inset 0 0 5px rgba(255, 255, 255, 0.5);
+    border-color: #c0392b;
+}
+
 /* Button Styles */
 .btn-primary {
-    background-color: #646cff;
-    color: white;
+    background-color: #ffffff !important;
+    color: #000000 !important;
     border: none;
     padding: 10px 20px;
     border-radius: 4px;
@@ -46,7 +76,7 @@
 }
 
 .btn-primary:hover {
-    background-color: #535bf2;
+    background-color: #e0e0e0;
 }
 
 .btn-secondary {
@@ -137,7 +167,7 @@
 }
 
 .form-control:focus {
-    border-color: #646cff;
+    border-color: #ffffff;
     outline: none;
 }
 
@@ -167,85 +197,161 @@
 
 .sidebar {
     width: 260px;
-    background-color: #1a1a1a;
-    border-right: 1px solid #333;
+    background-color: #111;
+    /* Darker modern background */
+    border-right: 1px solid #222;
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
+    transition: width 0.3s ease;
+    position: relative;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+}
+
+.sidebar.collapsed {
+    width: 80px;
 }
 
 .sidebar-header {
     padding: 1.5rem;
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid #222;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 70px;
+    box-sizing: border-box;
+}
+
+.sidebar.collapsed .sidebar-header {
+    justify-content: center;
+    padding: 1rem;
 }
 
 .sidebar-header h2 {
     margin: 0;
     font-size: 1.25rem;
     color: #fff;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.sidebar-toggle {
+    background: none;
+    border: none;
+    color: #888;
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 5px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.sidebar-toggle:hover {
+    color: #fff;
+    background-color: rgba(255, 255, 255, 0.1);
 }
 
 .sidebar-menu {
     flex: 1;
-    padding: 1rem 0;
+    padding: 1rem 0.75rem;
+    /* slightly less horizontal padding for pill shape space */
 }
 
 .sidebar-menu ul {
     list-style: none;
     padding: 0;
     margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    /* space between items */
 }
 
 .sidebar-menu li {
-    padding: 0.75rem 1.5rem;
+    padding: 12px 16px;
     cursor: pointer;
     display: flex;
     align-items: center;
     gap: 12px;
     color: #aaa;
     transition: all 0.2s;
+    border-radius: 8px;
+    /* Pill shape */
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.sidebar.collapsed .sidebar-menu li {
+    padding: 12px;
+    justify-content: center;
 }
 
 .sidebar-menu li:hover {
-    background-color: #2a2a2a;
+    background-color: rgba(255, 255, 255, 0.05);
     color: #fff;
 }
 
 .sidebar-menu li.active {
     background-color: #2a2a2a;
-    color: #646cff;
-    border-right: 3px solid #646cff;
+    color: #ffffff !important;
+    font-weight: 500;
+    /* Removed border-right, using background pill instead */
+}
+
+.sidebar.collapsed .sidebar-menu li.active {
+    background-color: #2a2a2a;
 }
 
 .sidebar-menu .icon {
     font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
 }
 
 .sidebar-menu .label {
-    font-weight: 500;
+    font-size: 0.95rem;
 }
 
 .sidebar-footer {
+    padding: 1.5rem;
+    border-top: 1px solid #222;
+}
+
+.sidebar.collapsed .sidebar-footer {
     padding: 1rem;
-    border-top: 1px solid #333;
+    display: flex;
+    justify-content: center;
 }
 
 .user-info {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
+    color: #ccc;
+    font-size: 0.9rem;
+}
+
+.sidebar.collapsed .user-info span {
+    display: none;
 }
 
 .avatar {
-    width: 32px;
-    height: 32px;
-    background-color: #646cff;
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #444, #222);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: bold;
     color: white;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 /* Main Content Area */
@@ -337,11 +443,14 @@
 }
 
 .status-badge {
-    padding: 4px 10px;
-    border-radius: 12px;
+    padding: 6px 12px;
+    border-radius: 20px;
     font-size: 0.85rem;
     font-weight: 600;
     display: inline-block;
+    min-width: 90px;
+    text-align: center;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .action-buttons {
@@ -417,7 +526,7 @@
     font-size: 2.5rem;
     font-weight: bold;
     margin: 10px 0 0;
-    color: #646cff;
+    color: #ffffff !important;
 }
 
 /* Trip Detail Styles */
@@ -459,7 +568,262 @@
     font-size: 1rem;
 }
 
-.history-row:hover {
-    background-color: #2a2a2a !important;
-    /* Adjusted for dark mode theme compatibility */
+
+/* Modern Drivers Page Styles */
+.actions-header {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.search-container {
+    position: relative;
+}
+
+.search-input {
+    background-color: #2a2a2a;
+    border: 1px solid #444;
+    padding: 10px 15px 10px 35px;
+    border-radius: 25px;
+    color: white;
+    font-size: 0.9rem;
+    width: 250px;
+    transition: all 0.3s ease;
+}
+
+.search-input:focus {
+    width: 300px;
+    border-color: #fff;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+}
+
+.search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #888;
+    font-size: 0.9rem;
+}
+
+/* Modern Table */
+.data-table {
+    border-collapse: separate;
+    border-spacing: 0 8px;
+    /* Spacing between rows */
+}
+
+.data-table thead th {
+    background-color: transparent;
+    border-bottom: none;
+    color: #888;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 0 20px 10px;
+}
+
+.data-table tbody tr {
+    background-color: #2a2a2a;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.data-table tbody tr:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    background-color: #333 !important;
+    /* Override striping/default hover */
+}
+
+.data-table td {
+    padding: 15px 20px;
+    border-bottom: none;
+    /* Remove border for card-like feel */
+    color: #eee;
+}
+
+.data-table td:first-child {
+    border-top-left-radius: 10px;
+    border-bottom-left-radius: 10px;
+}
+
+.data-table td:last-child {
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
+
+.driver-name-cell {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+/* Modern Modal (Glassmorphism) */
+.modal-overlay {
+    backdrop-filter: blur(8px);
+    background-color: rgba(0, 0, 0, 0.6);
+}
+
+.modal-content {
+    background-color: rgba(30, 30, 30, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    border-radius: 16px;
+}
+
+.modal-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 1rem;
+}
+
+.form-control {
+    background-color: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: border-color 0.2s;
+}
+
+.form-control:focus {
+    background-color: rgba(0, 0, 0, 0.5);
+    border-color: #fff;
+}
+
+/* Drivers Page White Theme Overrides */
+.drivers-page {
+    background-color: #ffffff;
+    color: #000000;
+    height: 100%;
+    /* Ensure it fills main-content if needed, though main-content has its own bg */
+}
+
+/* We might need to override main-content bg if it shows through, 
+   but since page-container is inside, we just ensure page-container covers it 
+   or we accept the generic bg for margins. 
+   Actually, main-content has padding? No, page-container has padding.
+   Let's ensure drivers-page covers well.
+*/
+
+.drivers-page .page-header h2 {
+    color: #000000;
+}
+
+.drivers-page .search-input {
+    background-color: #f5f5f5;
+    border: 1px solid #ddd;
+    color: #333;
+}
+
+.drivers-page .search-input:focus {
+    background-color: #fff;
+    border-color: #000;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+}
+
+.drivers-page .search-icon {
+    color: #666;
+}
+
+.drivers-page .data-table thead th {
+    color: #555;
+    font-weight: 700;
+}
+
+.drivers-page .data-table tbody tr {
+    background-color: #ffffff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    /* Softer shadow for light theme */
+    border: 1px solid #f0f0f0;
+    /* Simulate border via shadow or actual border if separated */
+}
+
+.drivers-page .data-table tbody tr:hover {
+    background-color: #f9f9f9 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.drivers-page .data-table td {
+    color: #333;
+    border-bottom: 1px solid #f0f0f0;
+    /* Add light border for separation in white theme */
+}
+
+.drivers-page .table-avatar {
+    background-color: #eee;
+    color: #333;
+    font-weight: bold;
+}
+
+.drivers-page .btn-primary {
+    background-color: #000000 !important;
+    color: #ffffff !important;
+}
+
+.drivers-page .btn-icon {
+    color: #333;
+}
+
+.drivers-page .btn-icon:hover {
+    background-color: #eee;
+}
+
+/* Adjust modal for white theme */
+.drivers-page .modal-content {
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    color: #333;
+}
+
+.drivers-page .modal-header {
+    border-bottom: 1px solid #eee;
+}
+
+.drivers-page .modal-header h3 {
+    color: #000;
+}
+
+.drivers-page .close-button {
+    color: #666;
+}
+
+.drivers-page .close-button:hover {
+    color: #000;
+}
+
+.drivers-page .form-control {
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    color: #333;
+}
+
+.drivers-page .form-control:focus {
+    background-color: #fff;
+    border-color: #000;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.05);
+}
+
+.drivers-page .form-group label {
+    color: #555;
+    font-weight: 500;
+}
+
+/* Modal Table (Assign Driver) specific overrides */
+.drivers-page .modal-content .data-table thead th {
+    color: #666;
+    background-color: #f9f9f9;
+    /* distinguish header in modal */
+}
+
+.drivers-page .modal-content .data-table tbody tr {
+    background-color: transparent;
+    box-shadow: none;
+    border-bottom: 1px solid #eee;
+}
+
+.drivers-page .modal-content .data-table tbody tr:hover {
+    background-color: #f5f5f5 !important;
+    transform: none;
+    /* simple list, maybe no transform needed */
+    box-shadow: none;
 }
