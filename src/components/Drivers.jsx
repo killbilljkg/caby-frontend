@@ -4,7 +4,7 @@ import { FiEdit2, FiTrash2 } from 'react-icons/fi';
 import '../App.css'; // Reusing global styles for now, but will verify table styles
 
 const Drivers = () => {
-    const API_BASE_URL = 'http://16.170.219.54:8081/api/v1/drivers';
+    const API_BASE_URL = 'https://api-caby.story-labs.in/api/v1/drivers';
 
     const [drivers, setDrivers] = useState([]);
     const [loading, setLoading] = useState(true);

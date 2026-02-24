@@ -12,7 +12,7 @@ function App() {
     const [location, setLocation] = useState(null);
     const [path, setPath] = useState([]);
     const [status, setStatus] = useState('Disconnected');
-    const [socketUrl, setSocketUrl] = useState('wss://caby-api.story-labs.in/ws/admin');
+    const [socketUrl, setSocketUrl] = useState('wss://caby-api-service-view-service.story-labs.in/ws/admin');
     const [activeDrivers, setActiveDrivers] = useState({}); // { [driverId]: { ...data } }
     const [ws, setWs] = useState(null);
     const [selectedDriverId, setSelectedDriverId] = useState(null);
@@ -85,7 +85,7 @@ function App() {
             return;
         }
         try {
-            const response = await fetch(`http://16.170.219.54:8081/api/v1/audits/${tripId}`);
+            const response = await fetch(`https://api-caby.story-labs.in/api/v1/audits/${tripId}`);
             if (!response.ok) throw new Error("Failed to fetch trip audits");
             let auditData = await response.json();
             console.log("Trip Detail Response:", auditData);
