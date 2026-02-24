@@ -20,7 +20,7 @@ const AssignDriver = () => {
     const fetchPendingTrips = async () => {
         setLoading(true);
         try {
-            const response = await fetch('http://16.170.219.54:8081/api/v1/audits');
+            const response = await fetch('https://api-caby.story-labs.in/api/v1/audits');
             if (!response.ok) {
                 throw new Error('Failed to fetch trips');
             }
@@ -53,7 +53,7 @@ const AssignDriver = () => {
         setDriverSearchTerm(''); // Reset search
         try {
             // Fetch drivers to choose from
-            const response = await fetch('http://16.170.219.54:8081/api/v1/drivers');
+            const response = await fetch('https://api-caby.story-labs.in/api/v1/drivers');
             if (!response.ok) throw new Error('Failed to fetch drivers');
             const data = await response.json();
             // Optional: Filter for Active drivers only? 
@@ -72,7 +72,7 @@ const AssignDriver = () => {
 
         setAssigning(true);
         try {
-            const response = await fetch('http://16.170.219.54:8081/api/v1/dispatch/trips/assign', {
+            const response = await fetch('https://api-caby.story-labs.in/api/v1/dispatch/trips/assign', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

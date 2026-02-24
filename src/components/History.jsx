@@ -11,7 +11,7 @@ const History = ({ onSelectTrip }) => {
     useEffect(() => {
         const fetchAudits = async () => {
             try {
-                const response = await fetch('http://16.170.219.54:8081/api/v1/audits');
+                const response = await fetch('https://api-caby.story-labs.in/api/v1/audits');
                 if (!response.ok) {
                     throw new Error('Failed to fetch audit history');
                 }
