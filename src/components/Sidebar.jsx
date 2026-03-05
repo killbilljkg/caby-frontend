@@ -1,68 +1,39 @@
-import React, { useState } from 'react';
-import { FiMap, FiUsers, FiUserCheck, FiClock, FiMenu, FiChevronLeft } from 'react-icons/fi';
+import React from 'react';
+import { FiMap, FiUsers, FiUserCheck, FiClock } from 'react-icons/fi';
 import '../App.css';
 
 const Sidebar = ({ activePage, onNavigate }) => {
-    const [isCollapsed, setIsCollapsed] = useState(false);
-
-    const toggleSidebar = () => {
-        setIsCollapsed(!isCollapsed);
-    };
+    const tabs = [
+        { key: 'live-tracking', label: 'Live Tracking', icon: <FiMap /> },
+        { key: 'drivers', label: 'Drivers', icon: <FiUsers /> },
+        { key: 'assign-driver', label: 'Assign Driver', icon: <FiUserCheck /> },
+        { key: 'history', label: 'History', icon: <FiClock /> },
+    ];
 
     return (
-        <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>
-            <div className="sidebar-header">
-                {!isCollapsed && <h2>Caby Admin</h2>}
-                <button className="sidebar-toggle" onClick={toggleSidebar}>
-                    {isCollapsed ? <FiMenu /> : <FiChevronLeft />}
-                </button>
+        <header className="top-nav">
+            <div className="top-nav-brand">
+                <span className="brand-dot" />
+                <span className="brand-name">Caby Admin</span>
             </div>
-            <nav className="sidebar-menu">
-                <ul>
-                    <li
-                        className={activePage === 'live-tracking' ? 'active' : ''}
-                        onClick={() => onNavigate('live-tracking')}
-                        title="Live Tracking"
+            <nav className="top-nav-tabs">
+                {tabs.map(tab => (
+                    <button
+                        key={tab.key}
+                        className={`top-nav-tab ${activePage === tab.key ? 'active' : ''}`}
+                        onClick={() => onNavigate(tab.key)}
                     >
-                        <span className="icon"><FiMap /></span>
-                        {!isCollapsed && <span className="label">Live Tracking</span>}
-                    </li>
-                    <li
-                        className={activePage === 'drivers' ? 'active' : ''}
-                        onClick={() => onNavigate('drivers')}
-                        title="Drivers"
-                    >
-                        <span className="icon"><FiUsers /></span>
-                        {!isCollapsed && <span className="label">Drivers</span>}
-                    </li>
-                    <li
-                        className={activePage === 'assign-driver' ? 'active' : ''}
-                        onClick={() => onNavigate('assign-driver')}
-                        title="Assign Driver"
-                    >
-                        <span className="icon"><FiUserCheck /></span>
-                        {!isCollapsed && <span className="label">Assign Driver</span>}
-                    </li>
-                    <li
-                        className={activePage === 'history' ? 'active' : ''}
-                        onClick={() => onNavigate('history')}
-                        title="History"
-                    >
-                        <span className="icon"><FiClock /></span>
-                        {!isCollapsed && <span className="label">History</span>}
-                    </li>
-                </ul>
+                        <span className="tab-icon">{tab.icon}</span>
+                        <span className="tab-label">{tab.label}</span>
+                    </button>
+                ))}
             </nav>
-            <div className="sidebar-footer">
-                <div className="user-info">
-                    <div className="avatar">A</div>
-                    {!isCollapsed && <span>Admin User</span>}
-                </div>
+            <div className="top-nav-user">
+                <div className="avatar">A</div>
+                <span>Admin</span>
             </div>
-        </aside>
+        </header>
     );
 };
 
 export default Sidebar;
-
-
