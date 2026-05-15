@@ -183,103 +183,161 @@ function App() {
                 return <AssignDriver />;
             case 'trip-detail':
                 return (
-                    <div className="trip-detail-container" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                        <header className="page-header" style={{ padding: '1rem', marginBottom: 0, borderBottom: '1px solid #333' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                <button className="btn-secondary" onClick={() => setActivePage('history')}>
+                    <div className="trip-detail-container">
+                        {/* White side panel */}
+                        <aside className="active-drivers-sidebar trip-detail-sidebar">
+                            {/* Header */}
+                            <div className="ads-header">
+                                <button className="td-back-btn" onClick={() => setActivePage('history')}>
                                     ← Back
                                 </button>
-                                <h2>Trip Details</h2>
+                                <span className="ads-title">Trip Details</span>
                             </div>
-                        </header>
 
-                        <div style={{ flex: 1, position: 'relative' }}>
+                            <div className="ads-list">
+                                {tripSummary ? (
+                                    <>
+                                        {/* Passenger card */}
+                                        <div className="ads-card ads-card--selected">
+                                            <div className="ads-card-top">
+                                                <span className="ads-driver-name">
+                                                    {tripSummary.passengerName || 'Unknown Passenger'}
+                                                </span>
+                                                <span
+                                                    className="ads-badge"
+                                                    style={tripSummary.status === 'START'
+                                                        ? { color: '#166534', borderColor: '#86efac', backgroundColor: '#dcfce7' }
+                                                        : {}}
+                                                >
+                                                    {tripSummary.status || 'N/A'}
+                                                </span>
+                                            </div>
+                                            {tripSummary.passengerPhoneNumber && (
+                                                <div className="ads-card-row">
+                                                    <span className="ads-icon">📞</span>
+                                                    <span className="ads-text">{tripSummary.passengerPhoneNumber}</span>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Driver card */}
+                                        <div className="ads-card">
+                                            <div className="ads-card-row">
+                                                <span className="ads-icon">🧑‍✈️</span>
+                                                <span className="ads-driver-name" style={{ fontSize: '0.95rem' }}>
+                                                    Driver: {tripSummary.driverId || 'N/A'}
+                                                </span>
+                                            </div>
+                                            <div className="ads-card-row">
+                                                <span className="ads-icon">🆔</span>
+                                                <span className="ads-text">Trip: {tripSummary.id || 'N/A'}</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Route card */}
+                                        <div className="ads-card">
+                                            <div className="ads-card-row">
+                                                <span className="ads-icon">📍</span>
+                                                <span className="ads-text">
+                                                    <strong style={{ color: '#333' }}>From: </strong>
+                                                    {tripSummary.fromLocation || 'N/A'}
+                                                </span>
+                                            </div>
+                                            {tripSummary.startTime && (
+                                                <div className="ads-card-row" style={{ paddingLeft: 26 }}>
+                                                    <span className="ads-text" style={{ color: '#999', fontSize: '0.8rem' }}>
+                                                        {new Date(tripSummary.startTime).toLocaleString()}
+                                                    </span>
+                                                </div>
+                                            )}
+                                            <div className="ads-card-row" style={{ marginTop: 6 }}>
+                                                <span className="ads-icon">🏁</span>
+                                                <span className="ads-text">
+                                                    <strong style={{ color: '#333' }}>To: </strong>
+                                                    {tripSummary.toLocation || 'N/A'}
+                                                </span>
+                                            </div>
+                                            {tripSummary.endTime && (
+                                                <div className="ads-card-row" style={{ paddingLeft: 26 }}>
+                                                    <span className="ads-text" style={{ color: '#999', fontSize: '0.8rem' }}>
+                                                        {new Date(tripSummary.endTime).toLocaleString()}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Distance card */}
+                                        <div className="ads-card">
+                                            <div className="ads-card-row">
+                                                <span className="ads-icon">🛣️</span>
+                                                <span className="ads-text">
+                                                    <strong style={{ color: '#333' }}>Corp: </strong>
+                                                    {tripSummary.totalDistanceCorporate || 0} km
+                                                </span>
+                                            </div>
+                                            <div className="ads-card-row">
+                                                <span className="ads-icon">📏</span>
+                                                <span className="ads-text">
+                                                    <strong style={{ color: '#333' }}>Owner: </strong>
+                                                    {tripSummary.totalDistanceOwner || 0} km
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <p className="ads-empty">No trip data available.</p>
+                                )}
+                            </div>
+                        </aside>
+
+                        {/* Map */}
+                        <div className="trip-detail-map">
                             <MapComponent location={location} path={path} />
-
-                            {tripSummary && (
-                                <div className="trip-summary-panel">
-                                    <div className="summary-grid">
-                                        <div className="summary-item">
-                                            <label>Passenger</label>
-                                            <span>{tripSummary.passengerName || 'N/A'}</span>
-                                            <span style={{ fontSize: '0.8rem', color: '#888' }}>{tripSummary.passengerPhoneNumber}</span>
-                                        </div>
-                                        <div className="summary-item">
-                                            <label>Status</label>
-                                            <span className="status-badge" style={{
-                                                backgroundColor: tripSummary.status === 'START' ? '#dcfce7' : '#2a2a2a',
-                                                color: tripSummary.status === 'START' ? '#166534' : '#fff',
-                                                border: '1px solid #444'
-                                            }}>
-                                                {tripSummary.status || 'N/A'}
-                                            </span>
-                                        </div>
-                                        <div className="summary-item">
-                                            <label>Driver ID</label>
-                                            <span style={{ fontSize: '0.9rem' }}>{tripSummary.driverId}</span>
-                                        </div>
-                                        <div className="summary-item">
-                                            <label>Trip ID</label>
-                                            <span style={{ fontSize: '0.9rem' }}>{tripSummary.id}</span>
-                                        </div>
-
-                                        <div className="summary-item">
-                                            <label>From</label>
-                                            <span>{tripSummary.fromLocation || 'N/A'}</span>
-                                            <span style={{ fontSize: '0.8rem', color: '#888' }}>
-                                                {tripSummary.startTime ? new Date(tripSummary.startTime).toLocaleString() : ''}
-                                            </span>
-                                        </div>
-                                        <div className="summary-item">
-                                            <label>To</label>
-                                            <span>{tripSummary.toLocation || 'N/A'}</span>
-                                            <span style={{ fontSize: '0.8rem', color: '#888' }}>
-                                                {tripSummary.endTime ? new Date(tripSummary.endTime).toLocaleString() : ''}
-                                            </span>
-                                        </div>
-                                        <div className="summary-item">
-                                            <label>Dist. (Corp)</label>
-                                            <span>{tripSummary.totalDistanceCorporate || 0} km</span>
-                                        </div>
-                                        <div className="summary-item">
-                                            <label>Dist. (Owner)</label>
-                                            <span>{tripSummary.totalDistanceOwner || 0} km</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
                         </div>
                     </div>
                 );
             case 'live-tracking':
                 return (
                     <div className="live-tracking-container" style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
-                        <aside className="active-drivers-sidebar" style={{ width: '300px', backgroundColor: '#1a1a1a', borderRight: '1px solid #333', overflowY: 'auto', padding: '1rem' }}>
-                            <h3>Active Drivers</h3>
-                            <div className="drivers-list" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <aside className="active-drivers-sidebar">
+                            <div className="ads-header">
+                                <span className="ads-title">Active Drivers</span>
+                                <span className="ads-count">{Object.values(activeDrivers).length}</span>
+                            </div>
+                            <div className="ads-list">
                                 {Object.values(activeDrivers).length === 0 ? (
-                                    <p style={{ color: '#666' }}>No active drivers data received yet.</p>
+                                    <p className="ads-empty">No active drivers yet.</p>
                                 ) : (
-                                    Object.values(activeDrivers).map((driver) => (
-                                        <div
-                                            key={driver.driverId}
-                                            className="driver-card"
-                                            onClick={() => handleDriverClick(driver.tripId)}
-                                            style={{
-                                                backgroundColor: '#2a2a2a',
-                                                padding: '12px',
-                                                borderRadius: '8px',
-                                                cursor: 'pointer',
-                                                border: '1px solid #444'
-                                            }}
-                                        >
-                                            <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>Driver ID: {driver.driverId}</div>
-                                            <div style={{ fontSize: '0.85rem', color: '#aaa' }}>Trip ID: {driver.tripId || 'N/A'}</div>
-                                            <div style={{ fontSize: '0.8rem', color: 'white', marginTop: '6px' }}>
-                                                {driver.status || 'Live'} • {driver.speed ? `${driver.speed} km/h` : ''}
+                                    Object.values(activeDrivers).map((driver) => {
+                                        const isSelected = selectedDriverId === driver.driverId;
+                                        return (
+                                            <div
+                                                key={driver.driverId}
+                                                className={`ads-card ${isSelected ? 'ads-card--selected' : ''}`}
+                                                onClick={() => handleDriverClick(driver.tripId)}
+                                            >
+                                                <div className="ads-card-top">
+                                                    <span className="ads-driver-name">
+                                                        Driver&nbsp;{driver.driverId}
+                                                    </span>
+                                                    <span className="ads-badge">New</span>
+                                                </div>
+                                                <div className="ads-card-row">
+                                                    <span className="ads-icon">📍</span>
+                                                    <span className="ads-text">{driver.fromLocation || 'En Route'}</span>
+                                                </div>
+                                                <div className="ads-card-row">
+                                                    <span className="ads-icon">🕐</span>
+                                                    <span className="ads-text">
+                                                        {driver.lastUpdate
+                                                            ? new Date(driver.lastUpdate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                                                            : 'Live'}
+                                                        {driver.speed ? ` • ${driver.speed} km/h` : ''}
+                                                    </span>
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))
+                                        );
+                                    })
                                 )}
                             </div>
                         </aside>
@@ -334,7 +392,7 @@ function App() {
     };
 
     return (
-        <div className="app-root">
+        <div className="app-root app-root--top-nav">
             <Sidebar activePage={activePage} onNavigate={handleNavigation} />
             <div className="main-content">
                 {renderContent()}
