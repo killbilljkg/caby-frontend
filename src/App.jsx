@@ -4,11 +4,41 @@ import Sidebar from './components/Sidebar';
 import Drivers from './components/Drivers';
 import History from './components/History';
 import AssignDriver from './components/AssignDriver';
+import Dashboard from './components/Dashboard';
+import Login from './components/Login';
 import { connectWebSocket } from './services/socket';
+import { isAuthenticated as checkAuth, getUser, logout as authLogout } from './services/authService';
 import './App.css';
 
 function App() {
-    const [activePage, setActivePage] = useState('live-tracking'); // 'live-tracking' | 'drivers' | 'history' | 'assign-driver'
+    // ── Auth state ──────────────────────────────────────────────
+    const [authenticated, setAuthenticated] = useState(() => checkAuth());
+    const [currentUser, setCurrentUser] = useState(() => getUser());
+
+    const handleLogin = (data) => {
+        setCurrentUser({ userId: data.userId, username: data.username });
+        setAuthenticated(true);
+    };
+
+    const handleLogout = () => {
+        authLogout();
+        setAuthenticated(false);
+        setCurrentUser(null);
+        // Reset dashboard state
+        localStorage.setItem('caby_active_page', 'dashboard');
+        setActivePage('dashboard');
+        setPath([]);
+        setLocation(null);
+        setTripSummary(null);
+        setSelectedDriverId(null);
+        selectedDriverIdRef.current = null;
+        if (ws) { ws.close(); setWs(null); }
+    };
+    // ────────────────────────────────────────────────────────────
+
+    const [activePage, setActivePage] = useState(
+        () => localStorage.getItem('caby_active_page') || 'dashboard'
+    ); // 'dashboard' | 'live-tracking' | 'drivers' | 'history' | 'assign-driver'
     const [location, setLocation] = useState(null);
     const [path, setPath] = useState([]);
     const [status, setStatus] = useState('Disconnected');
@@ -175,6 +205,8 @@ function App() {
 
     const renderContent = () => {
         switch (activePage) {
+            case 'dashboard':
+                return <Dashboard onNavigate={handleNavigation} />;
             case 'drivers':
                 return <Drivers />;
             case 'history':
@@ -388,12 +420,23 @@ function App() {
             setSelectedDriverId(null);
             selectedDriverIdRef.current = null;
         }
+        localStorage.setItem('caby_active_page', page);
         setActivePage(page);
     };
 
+    // Show login page if not authenticated
+    if (!authenticated) {
+        return <Login onLogin={handleLogin} />;
+    }
+
     return (
         <div className="app-root app-root--top-nav">
-            <Sidebar activePage={activePage} onNavigate={handleNavigation} />
+            <Sidebar
+                activePage={activePage}
+                onNavigate={handleNavigation}
+                username={currentUser?.username}
+                onLogout={handleLogout}
+            />
             <div className="main-content">
                 {renderContent()}
             </div>
