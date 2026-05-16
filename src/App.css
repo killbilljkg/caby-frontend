@@ -2086,3 +2086,140 @@
     text-align: center;
     padding: 0.5rem 0;
 }
+
+/* ── History page status filter ── */
+.hist-filter-wrap {
+    position: relative;
+}
+
+.hist-filter-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 14px;
+    border: 1px solid #ddd;
+    border-radius: 25px;
+    background: #fff;
+    color: #333;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    position: relative;
+}
+
+.hist-filter-btn:hover {
+    border-color: #999;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.hist-filter-label {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.hist-filter-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #111;
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    margin-left: 2px;
+}
+
+.hist-filter-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 200px;
+    background: #fff;
+    border: 1px solid #e8e8e8;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    z-index: 100;
+    overflow: hidden;
+    animation: histDropIn 0.15s ease;
+}
+
+@keyframes histDropIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.hist-filter-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 14px;
+    cursor: pointer;
+    transition: background 0.12s;
+    font-size: 0.85rem;
+    color: #333;
+}
+
+.hist-filter-option:hover {
+    background: #f5f5f5;
+}
+
+.hist-filter-option--active {
+    background: #fafafa;
+}
+
+.hist-filter-check {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    border: 1.5px solid #ccc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.12s, border-color 0.12s;
+}
+
+.hist-filter-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.hist-filter-text {
+    flex: 1;
+    font-weight: 500;
+}
+
+.hist-filter-clear {
+    display: block;
+    width: 100%;
+    padding: 9px 14px;
+    border: none;
+    border-top: 1px solid #f0f0f0;
+    background: transparent;
+    color: #888;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: left;
+    transition: color 0.12s, background 0.12s;
+}
+
+.hist-filter-clear:hover {
+    color: #c62828;
+    background: #fff5f5;
+}
+
+.hist-filter-empty {
+    padding: 12px 14px;
+    color: #bbb;
+    font-size: 0.82rem;
+    margin: 0;
+}
