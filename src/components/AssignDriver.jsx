@@ -2,7 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import { FiUserPlus, FiCheck, FiX, FiSearch } from 'react-icons/fi';
 import toast from 'react-hot-toast';
+import { getToken } from '../services/authService';
 import '../App.css';
+
+const API_BASE = 'https://api-caby.story-labs.in';
 
 const AssignDriver = () => {
     const [pendingTrips, setPendingTrips] = useState([]);
@@ -17,21 +20,28 @@ const AssignDriver = () => {
     const [assigning, setAssigning] = useState(false);
     const [driverSearchTerm, setDriverSearchTerm] = useState('');
 
+    const authHeaders = () => ({
+        'Authorization': `Bearer ${getToken()}`,
+    });
+    const writeHeaders = () => ({
+        'Authorization': `Bearer ${getToken()}`,
+        'Content-Type': 'application/json',
+    });
+
     const fetchPendingTrips = async () => {
         setLoading(true);
         try {
-            const response = await fetch('https://api-caby.story-labs.in/api/v1/audits');
-            if (!response.ok) {
-                throw new Error('Failed to fetch trips');
-            }
+            const response = await fetch(`${API_BASE}/api/v1/audits`, {
+                headers: authHeaders(),
+            });
+            if (!response.ok) throw new Error('Failed to fetch trips');
             const data = await response.json();
             const allTrips = Array.isArray(data) ? data : [];
 
-            // Filter for trips with status PENDING
-            const pending = allTrips.filter(item => {
-                const status = item.currentStatus || (item.trip && item.trip.currentStatus);
-                return status === 'PENDING';
-            });
+            // API uses 'REQUESTED' for unassigned trips needing a driver
+            const pending = allTrips.filter(trip =>
+                trip.currentStatus === 'REQUESTED' || trip.currentStatus === 'PENDING'
+            );
 
             setPendingTrips(pending);
         } catch (err) {
@@ -50,14 +60,13 @@ const AssignDriver = () => {
         setSelectedTripId(tripId);
         setShowModal(true);
         setLoadingDrivers(true);
-        setDriverSearchTerm(''); // Reset search
+        setDriverSearchTerm('');
         try {
-            // Fetch drivers to choose from
-            const response = await fetch('https://api-caby.story-labs.in/api/v1/drivers');
+            const response = await fetch(`${API_BASE}/api/v1/drivers`, {
+                headers: authHeaders(),
+            });
             if (!response.ok) throw new Error('Failed to fetch drivers');
             const data = await response.json();
-            // Optional: Filter for Active drivers only? 
-            // For now, let's show all, or maybe sort Active to top
             setDrivers(Array.isArray(data) ? data : []);
         } catch (err) {
             toast.error('Failed to load drivers list');
@@ -72,13 +81,10 @@ const AssignDriver = () => {
 
         setAssigning(true);
         try {
-            const response = await fetch('https://api-caby.story-labs.in/api/v1/dispatch/trips/assign', {
+            const response = await fetch(`${API_BASE}/api/v1/dispatch/trips/assign`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    tripId: selectedTripId,
-                    driverId: driverId
-                })
+                headers: writeHeaders(),
+                body: JSON.stringify({ tripId: selectedTripId, driverId }),
             });
 
             if (!response.ok) {
@@ -86,17 +92,14 @@ const AssignDriver = () => {
                 throw new Error(errData.message || 'Assignment failed');
             }
 
-            // Success
             toast.success('Driver assigned successfully!');
             setShowModal(false);
             setSelectedTripId(null);
-
-            // Refresh the pending list
             fetchPendingTrips();
 
         } catch (err) {
             console.error(err);
-            toast.error(`Error: ${err.message} `);
+            toast.error(`Error: ${err.message}`);
         } finally {
             setAssigning(false);
         }
@@ -133,45 +136,36 @@ const AssignDriver = () => {
                         {pendingTrips.length === 0 ? (
                             <tr>
                                 <td colSpan="6" style={{ textAlign: 'center', padding: '2rem', background: '#ffffff', borderRadius: '8px' }}>
-                                    No pending trips found.
+                                    No unassigned trips found.
                                 </td>
                             </tr>
                         ) : (
-                            pendingTrips.map((audit) => {
-                                const tripObj = audit.trip || {};
-                                const id = audit.id || tripObj.id;
-                                const passenger = audit.passengerName || tripObj.passengerName;
-                                const from = audit.fromLocation || tripObj.fromLocation;
-                                const to = audit.toLocation || tripObj.toLocation;
-                                const status = audit.currentStatus || tripObj.currentStatus;
-
-                                return (
-                                    <tr key={id}>
-                                        <td style={{ fontWeight: '500' }}>#{id ? id.toString().slice(-6) : 'N/A'}</td>
-                                        <td>{passenger || 'N/A'}</td>
-                                        <td>{from || 'N/A'}</td>
-                                        <td>{to || 'N/A'}</td>
-                                        <td>
-                                            <span className="status-badge" style={{
-                                                backgroundColor: '#fff7ed', // Orange/Yellowish
-                                                color: '#c2410c'
-                                            }}>
-                                                {status || 'PENDING'}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <button
-                                                className="btn-primary"
-                                                style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '8px' }}
-                                                onClick={() => handleOpenAssignModal(id)}
-                                                title="Assign Driver"
-                                            >
-                                                <FiUserPlus /> Assign
-                                            </button>
-                                        </td>
-                                    </tr>
-                                );
-                            })
+                            pendingTrips.map((trip) => (
+                                <tr key={trip.id}>
+                                    <td style={{ fontWeight: '500' }}>#{trip.id ? trip.id.toString().slice(-6) : 'N/A'}</td>
+                                    <td>{trip.passengerName || '—'}</td>
+                                    <td>{trip.fromLocation || '—'}</td>
+                                    <td>{trip.toLocation || '—'}</td>
+                                    <td>
+                                        <span className="status-badge" style={{
+                                            backgroundColor: '#fff7ed',
+                                            color: '#c2410c'
+                                        }}>
+                                            {trip.currentStatus || 'REQUESTED'}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button
+                                            className="btn-primary"
+                                            style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '8px' }}
+                                            onClick={() => handleOpenAssignModal(trip.id)}
+                                            title="Assign Driver"
+                                        >
+                                            <FiUserPlus /> Assign
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))
                         )}
                     </tbody>
                 </table>
