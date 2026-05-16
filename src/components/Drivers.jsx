@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { FiEdit2, FiTrash2 } from 'react-icons/fi';
+import { getToken } from '../services/authService';
 import '../App.css'; // Reusing global styles for now, but will verify table styles
 
 const Drivers = () => {
     const API_BASE_URL = 'https://api-caby.story-labs.in/api/v1/drivers';
+    // GET / DELETE — no body, so no Content-Type (avoids CORS preflight rejection on some routes)
+    const readHeaders  = { 'Authorization': `Bearer ${getToken()}` };
+    // POST / PUT — JSON body requires Content-Type
+    const writeHeaders = { 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json' };
 
     const [drivers, setDrivers] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -30,7 +35,7 @@ const Drivers = () => {
 
     const fetchDrivers = async () => {
         try {
-            const response = await fetch(API_BASE_URL);
+            const response = await fetch(API_BASE_URL, { headers: readHeaders });
             if (!response.ok) throw new Error('Failed to fetch drivers');
             const data = await response.json();
             // Ensure data is an array
@@ -89,6 +94,7 @@ const Drivers = () => {
         try {
             const response = await fetch(`${API_BASE_URL}/${id}`, {
                 method: 'DELETE',
+                headers: readHeaders,
             });
 
             if (!response.ok) throw new Error('Failed to delete driver');
@@ -129,9 +135,7 @@ const Drivers = () => {
 
             const response = await fetch(url, {
                 method: method,
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: writeHeaders,
                 body: JSON.stringify(payload),
             });
 
