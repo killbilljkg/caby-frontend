@@ -8,7 +8,8 @@ import Dashboard from './components/Dashboard';
 import CompanyDashboard from './components/CompanyDashboard';
 import Login from './components/Login';
 import { connectWebSocket } from './services/socket';
-import { isAuthenticated as checkAuth, getUser, getToken, logout as authLogout } from './services/authService';
+import { colorForDriver } from './components/MapComponent';
+import { isAuthenticated as checkAuth, getUser, logout as authLogout } from './services/authService';
 import './App.css';
 
 function App() {
@@ -48,6 +49,7 @@ function App() {
     const [ws, setWs] = useState(null);
     const [selectedDriverId, setSelectedDriverId] = useState(null);
     const [tripSummary, setTripSummary] = useState(null);
+    const [showLiveDetailPanel, setShowLiveDetailPanel] = useState(false);
     const selectedDriverIdRef = React.useRef(null);
 
     // Sync ref with state
@@ -77,23 +79,31 @@ function App() {
                 const formattedData = { ...data, lat, lng };
 
                 const driverId = data.driver_id || data.driverId;
-                const tripId   = data.trip_id   || data.tripId;
+                const tripId = data.trip_id || data.tripId;
 
                 if (selectedDriverIdRef.current && driverId === selectedDriverIdRef.current) {
                     setLocation(formattedData);
                     setPath((prevPath) => [...prevPath, formattedData]);
                 }
 
+                // Update active drivers list, keeping previous position for heading calculation
                 if (driverId) {
-                    setActiveDrivers(prev => ({
-                        ...prev,
-                        [driverId]: {
-                            ...data,
-                            driverId,
-                            tripId,
-                            lastUpdate: new Date().toISOString()
-                        }
-                    }));
+                    setActiveDrivers(prev => {
+                        const previous = prev[driverId];
+                        return {
+                            ...prev,
+                            [driverId]: {
+                                ...data,
+                                driverId,
+                                tripId,
+                                lat,
+                                lng,
+                                prevLat: previous?.lat,
+                                prevLng: previous?.lng,
+                                lastUpdate: new Date().toISOString(),
+                            },
+                        };
+                    });
                 }
             }
         });
@@ -329,43 +339,54 @@ function App() {
                         </div>
                     </div>
                 );
-            case 'live-tracking':
+            case 'live-tracking': {
+                const driverList = Object.values(activeDrivers);
+                const selectedDriver = selectedDriverId ? activeDrivers[selectedDriverId] : null;
+                const onMarkerClick = (d) => {
+                    setSelectedDriverId(d.driverId);
+                    selectedDriverIdRef.current = d.driverId;
+                    setShowLiveDetailPanel(true);
+                    if (d.tripId) handleDriverClick(d.tripId);
+                };
                 return (
                     <div className="live-tracking-container" style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
                         <aside className="active-drivers-sidebar">
                             <div className="ads-header">
                                 <span className="ads-title">Active Drivers</span>
-                                <span className="ads-count">{Object.values(activeDrivers).length}</span>
+                                <span className="ads-count">{driverList.length}</span>
                             </div>
                             <div className="ads-list">
-                                {Object.values(activeDrivers).length === 0 ? (
-                                    <p className="ads-empty">No active drivers yet.</p>
+                                {driverList.length === 0 ? (
+                                    <p className="ads-empty">Waiting for driver pings…</p>
                                 ) : (
-                                    Object.values(activeDrivers).map((driver) => {
+                                    driverList.map((driver) => {
                                         const isSelected = selectedDriverId === driver.driverId;
+                                        const color = colorForDriver(driver.driverId);
                                         return (
                                             <div
                                                 key={driver.driverId}
                                                 className={`ads-card ${isSelected ? 'ads-card--selected' : ''}`}
-                                                onClick={() => handleDriverClick(driver.tripId)}
+                                                style={{ borderLeft: `4px solid ${color}` }}
+                                                onClick={() => onMarkerClick(driver)}
                                             >
                                                 <div className="ads-card-top">
                                                     <span className="ads-driver-name">
+                                                        <span className="ads-dot" style={{ background: color }} />
                                                         Driver&nbsp;{driver.driverId}
                                                     </span>
-                                                    <span className="ads-badge">New</span>
+                                                    <span className="ads-badge">{driver.status || 'LIVE'}</span>
                                                 </div>
                                                 <div className="ads-card-row">
                                                     <span className="ads-icon">📍</span>
-                                                    <span className="ads-text">{driver.fromLocation || 'En Route'}</span>
+                                                    <span className="ads-text">{driver.fromLocation || `${driver.lat?.toFixed?.(4)}, ${driver.lng?.toFixed?.(4)}`}</span>
                                                 </div>
                                                 <div className="ads-card-row">
                                                     <span className="ads-icon">🕐</span>
                                                     <span className="ads-text">
                                                         {driver.lastUpdate
-                                                            ? new Date(driver.lastUpdate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                                                            ? new Date(driver.lastUpdate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
                                                             : 'Live'}
-                                                        {driver.speed ? ` • ${driver.speed} km/h` : ''}
+                                                        {driver.speed != null ? ` • ${Math.round(driver.speed)} km/h` : ''}
                                                     </span>
                                                 </div>
                                             </div>
@@ -374,7 +395,7 @@ function App() {
                                 )}
                             </div>
                         </aside>
-                        <div className="map-view-container" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                        <div className="map-view-container" style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
                             <header className="app-header">
                                 <h1>Real-time Location Tracker</h1>
                                 <div className="controls">
@@ -385,12 +406,48 @@ function App() {
                                     />
                                 </div>
                             </header>
-                            <main className="map-wrapper" style={{ flex: 1 }}>
-                                <MapComponent location={location} path={path} />
+                            <main className="map-wrapper" style={{ flex: 1, position: 'relative' }}>
+                                <MapComponent
+                                    drivers={driverList}
+                                    selectedDriverId={selectedDriverId}
+                                    onDriverClick={onMarkerClick}
+                                    path={selectedDriverId ? path : []}
+                                />
+                                {showLiveDetailPanel && selectedDriver && (
+                                    <div className="live-detail-panel">
+                                        <div className="ldp-header" style={{ borderBottomColor: colorForDriver(selectedDriver.driverId) }}>
+                                            <div>
+                                                <div className="ldp-title">
+                                                    <span className="ads-dot" style={{ background: colorForDriver(selectedDriver.driverId) }} />
+                                                    Driver {selectedDriver.driverId}
+                                                </div>
+                                                <div className="ldp-sub">{selectedDriver.status || 'LIVE'}</div>
+                                            </div>
+                                            <button className="ldp-close" onClick={() => { setShowLiveDetailPanel(false); setSelectedDriverId(null); selectedDriverIdRef.current = null; setPath([]); setLocation(null); }}>×</button>
+                                        </div>
+                                        <div className="ldp-body">
+                                            <div className="ldp-row"><span>Position</span><b>{selectedDriver.lat?.toFixed?.(5)}, {selectedDriver.lng?.toFixed?.(5)}</b></div>
+                                            {selectedDriver.speed != null && <div className="ldp-row"><span>Speed</span><b>{Math.round(selectedDriver.speed)} km/h</b></div>}
+                                            {selectedDriver.tripId && <div className="ldp-row"><span>Trip</span><b>{selectedDriver.tripId}</b></div>}
+                                            {selectedDriver.lastUpdate && <div className="ldp-row"><span>Last update</span><b>{new Date(selectedDriver.lastUpdate).toLocaleTimeString()}</b></div>}
+                                            {tripSummary && (
+                                                <>
+                                                    <div className="ldp-divider">Trip details</div>
+                                                    {tripSummary.passengerName && <div className="ldp-row"><span>Passenger</span><b>{tripSummary.passengerName}</b></div>}
+                                                    {tripSummary.passengerPhoneNumber && <div className="ldp-row"><span>Phone</span><b>{tripSummary.passengerPhoneNumber}</b></div>}
+                                                    {tripSummary.fromLocation && <div className="ldp-row"><span>From</span><b>{tripSummary.fromLocation}</b></div>}
+                                                    {tripSummary.toLocation && <div className="ldp-row"><span>To</span><b>{tripSummary.toLocation}</b></div>}
+                                                    {tripSummary.status && <div className="ldp-row"><span>Status</span><b>{tripSummary.status}</b></div>}
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                             </main>
                         </div>
                     </div>
                 );
+            }
             case 'home':
             default:
                 if (activePage !== 'live-tracking') {
