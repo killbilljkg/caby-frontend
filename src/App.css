@@ -1170,7 +1170,48 @@
 }
 
 /* Brand row */
+/* ── Login tabs ── */
+.login-tabs {
+    display: flex;
+    gap: 4px;
+    background: #f0f0f0;
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 1.5rem;
+}
+
+.login-tab {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 9px;
+    background: transparent;
+    color: #888;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+    white-space: nowrap;
+}
+
+.login-tab:hover:not(.login-tab--active) {
+    color: #444;
+    background: rgba(0,0,0,0.04);
+}
+
+.login-tab--active {
+    background: #ffffff;
+    color: #000000;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.12);
+}
+
+/* Brand row */
 .login-brand {
+
     display: flex;
     align-items: center;
     gap: 10px;
@@ -2222,4 +2263,188 @@
     color: #bbb;
     font-size: 0.82rem;
     margin: 0;
+}
+
+/* ── Company Trips page ── */
+
+/* Filter panel */
+.ct-filter-panel {
+    background: #fff;
+    border: 1px solid #e8e8e8;
+    border-radius: 12px;
+    padding: 1.1rem 1.25rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    animation: histDropIn 0.15s ease;
+}
+.ct-filter-row {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+/* Active filter chips */
+.ct-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 12px;
+    background: #111;
+    color: #fff;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+/* Trip detail info grid */
+.ct-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.75rem;
+}
+.ct-info-card {
+    background: #fff;
+    border: 1px solid #e8e8e8;
+    border-radius: 12px;
+    padding: 0.9rem 1.1rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+.ct-info-label {
+    margin: 0 0 4px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #999;
+}
+.ct-info-value {
+    margin: 0 0 2px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #111;
+}
+.ct-info-sub {
+    margin: 0;
+    font-size: 0.75rem;
+    color: #888;
+}
+
+/* Milestone timeline */
+.ct-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+.ct-milestone {
+    display: flex;
+    gap: 1rem;
+    position: relative;
+    padding-bottom: 1.25rem;
+}
+.ct-milestone--line::before {
+    content: '';
+    position: absolute;
+    left: 7px;
+    top: 18px;
+    bottom: 0;
+    width: 2px;
+    background: #e8e8e8;
+}
+.ct-milestone-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 3px;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 2px currentColor;
+    position: relative;
+    z-index: 1;
+}
+.ct-milestone-body {
+    flex: 1;
+    min-width: 0;
+}
+.ct-milestone-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+}
+.ct-milestone-event {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+.ct-milestone-time {
+    font-size: 0.78rem;
+    color: #888;
+}
+.ct-milestone-meta {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    font-size: 0.78rem;
+    color: #666;
+}
+
+/* Pagination */
+.ct-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 0.25rem 0;
+}
+.ct-pagination-info {
+    font-size: 0.83rem;
+    color: #888;
+}
+.ct-pagination-btns {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.ct-page-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    height: 34px;
+    padding: 0 8px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: #fff;
+    color: #333;
+    font-size: 0.83rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+.ct-page-btn:hover:not(:disabled):not(.ct-page-btn--active) {
+    background: #f5f5f5;
+    border-color: #bbb;
+}
+.ct-page-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+.ct-page-btn--active {
+    background: #111;
+    color: #fff;
+    border-color: #111;
+    font-weight: 700;
+}
+.ct-page-ellipsis {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    color: #aaa;
+    font-size: 0.9rem;
+    user-select: none;
 }

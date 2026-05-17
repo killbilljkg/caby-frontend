@@ -1,15 +1,11 @@
 const API_BASE = 'https://api-caby.story-labs.in';
 
-const TOKEN_KEY = 'caby_token';
-const USER_KEY = 'caby_user';
+const TOKEN_KEY   = 'caby_token';
+const USER_KEY    = 'caby_user';
 
-/**
- * Calls POST /api/v1/auth/admin/login with username + password.
- * On success stores the JWT token and user info in localStorage.
- * @returns {{ token, userId, username }}
- */
-export async function login(username, password) {
-    const response = await fetch(`${API_BASE}/api/v1/auth/cab-admin/login`, {
+/** Shared helper — POST login, store token + user info */
+async function _doLogin(endpoint, username, password) {
+    const response = await fetch(`${API_BASE}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
@@ -25,10 +21,31 @@ export async function login(username, password) {
     }
 
     const data = await response.json();
-    // data: { token, userId, username }
+    // data: { token, userId, username, role?, companyId? }
     localStorage.setItem(TOKEN_KEY, data.token);
-    localStorage.setItem(USER_KEY, JSON.stringify({ userId: data.userId, username: data.username }));
+    localStorage.setItem(USER_KEY, JSON.stringify({
+        userId:    data.userId,
+        username:  data.username,
+        role:      data.role      || 'ADMIN',
+        companyId: data.companyId || null,
+    }));
     return data;
+}
+
+/**
+ * Cab-Admin login — POST /api/v1/auth/cab-admin/login
+ * @returns {{ token, userId, username, role }}
+ */
+export async function login(username, password) {
+    return _doLogin('/api/v1/auth/cab-admin/login', username, password);
+}
+
+/**
+ * Company-Admin login — POST /api/v1/auth/company-admin/login
+ * @returns {{ token, userId, username, role, companyId }}
+ */
+export async function loginCompanyAdmin(username, password) {
+    return _doLogin('/api/v1/auth/company-admin/login', username, password);
 }
 
 /** Remove stored session */
@@ -42,7 +59,7 @@ export function getToken() {
     return localStorage.getItem(TOKEN_KEY);
 }
 
-/** Returns { userId, username } or null */
+/** Returns { userId, username, role, companyId } or null */
 export function getUser() {
     const raw = localStorage.getItem(USER_KEY);
     if (!raw) return null;
