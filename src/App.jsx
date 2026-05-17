@@ -195,7 +195,10 @@ function App() {
     };
 
     useEffect(() => {
-        // Auto-connect on mount (optional, or wait for user)
+        // Only connect WebSocket for CAB_ADMIN — company admins have no access to this socket
+        const role = getUser()?.role;
+        if (role === 'COMPANY_ADMIN') return;
+
         handleConnect();
 
         return () => {
