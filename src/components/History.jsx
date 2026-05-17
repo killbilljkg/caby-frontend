@@ -4,23 +4,26 @@ import '../App.css';
 
 /* Status colour map */
 const STATUS_STYLES = {
-    COMPLETED:  { bg: '#dcfce7', color: '#166534' },
-    ACCEPTED:   { bg: '#e3f2fd', color: '#1565c0' },
-    REQUESTED:  { bg: '#fff7ed', color: '#c2410c' },
-    CANCELLED:  { bg: '#ffebee', color: '#c62828' },
-    START:      { bg: '#dcfce7', color: '#166534' },
+    COMPLETED: { bg: '#dcfce7', color: '#166534' },
+    END:       { bg: '#dcfce7', color: '#166534' },
+    ACCEPTED:  { bg: '#e3f2fd', color: '#1565c0' },
+    REQUESTED: { bg: '#fff7ed', color: '#c2410c' },
+    CANCELLED: { bg: '#ffebee', color: '#c62828' },
+    START:     { bg: '#f3e5f5', color: '#6a1b9a' },
+    PICKUP:    { bg: '#e3f2fd', color: '#1565c0' },
+    DROPOFF:   { bg: '#e3f2fd', color: '#1565c0' },
 };
 const statusStyle = (s) => STATUS_STYLES[(s || '').toUpperCase()] || { bg: '#f3f4f6', color: '#1f2937' };
 
 const History = ({ onSelectTrip }) => {
-    const [audits,     setAudits]     = useState([]);
-    const [loading,    setLoading]    = useState(true);
-    const [error,      setError]      = useState(null);
+    const [audits, setAudits] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
 
     /* ── Multi-select status filter ── */
     const [selectedStatuses, setSelectedStatuses] = useState([]); // [] = all
-    const [dropdownOpen,     setDropdownOpen]     = useState(false);
+    const [dropdownOpen, setDropdownOpen] = useState(false);
     const dropdownRef = useRef(null);
 
     useEffect(() => {
@@ -69,10 +72,10 @@ const History = ({ onSelectTrip }) => {
     const filteredAudits = audits.filter(audit => {
         const term = searchTerm.toLowerCase();
         const matchesSearch = !term || (
-            (audit.driverId      && audit.driverId.toLowerCase().includes(term))      ||
+            (audit.driverId && audit.driverId.toLowerCase().includes(term)) ||
             (audit.passengerName && audit.passengerName.toLowerCase().includes(term)) ||
-            (audit.fromLocation  && audit.fromLocation.toLowerCase().includes(term))  ||
-            (audit.toLocation    && audit.toLocation.toLowerCase().includes(term))
+            (audit.fromLocation && audit.fromLocation.toLowerCase().includes(term)) ||
+            (audit.toLocation && audit.toLocation.toLowerCase().includes(term))
         );
         const matchesStatus = selectedStatuses.length === 0 ||
             selectedStatuses.includes((audit.currentStatus || '').toUpperCase());
@@ -172,7 +175,7 @@ const History = ({ onSelectTrip }) => {
                 <table className="data-table">
                     <thead>
                         <tr>
-                            <th>Driver ID</th>
+                            <th>Driver Name</th>
                             <th>Passenger</th>
                             <th>From</th>
                             <th>To</th>
@@ -194,7 +197,7 @@ const History = ({ onSelectTrip }) => {
                                     <tr key={audit.id} className="history-row">
                                         <td>
                                             <div style={{ fontWeight: '500', color: '#333' }}>
-                                                {audit.driverId || 'N/A'}
+                                                {audit.driverName || (audit.driverId ? `…${audit.driverId.slice(-8)}` : 'N/A')}
                                             </div>
                                         </td>
                                         <td>{audit.passengerName || 'N/A'}</td>
@@ -209,11 +212,11 @@ const History = ({ onSelectTrip }) => {
                                             <button
                                                 className="btn-icon"
                                                 onClick={() => onSelectTrip(audit.id)}
-                                                title={audit.currentStatus === 'COMPLETED' ? 'View Details' : 'Only available for completed trips'}
-                                                disabled={(audit.currentStatus || '').toUpperCase() !== 'COMPLETED'}
+                                                title={['END','COMPLETED'].includes((audit.currentStatus||'').toUpperCase()) ? 'View Details' : 'Only available for completed trips'}
+                                                disabled={!['END','COMPLETED'].includes((audit.currentStatus||'').toUpperCase())}
                                                 style={{
-                                                    color: (audit.currentStatus || '').toUpperCase() === 'COMPLETED' ? '#333' : '#ccc',
-                                                    cursor: (audit.currentStatus || '').toUpperCase() === 'COMPLETED' ? 'pointer' : 'not-allowed',
+                                                    color: ['END','COMPLETED'].includes((audit.currentStatus||'').toUpperCase()) ? '#333' : '#ccc',
+                                                    cursor: ['END','COMPLETED'].includes((audit.currentStatus||'').toUpperCase()) ? 'pointer' : 'not-allowed',
                                                 }}
                                             >
                                                 <FiEye />
