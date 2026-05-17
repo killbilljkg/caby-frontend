@@ -5,6 +5,7 @@ import Drivers from './components/Drivers';
 import History from './components/History';
 import AssignDriver from './components/AssignDriver';
 import Dashboard from './components/Dashboard';
+import CompanyDashboard from './components/CompanyDashboard';
 import Login from './components/Login';
 import { connectWebSocket } from './services/socket';
 import { isAuthenticated as checkAuth, getUser, logout as authLogout } from './services/authService';
@@ -16,7 +17,7 @@ function App() {
     const [currentUser, setCurrentUser] = useState(() => getUser());
 
     const handleLogin = (data) => {
-        setCurrentUser({ userId: data.userId, username: data.username });
+        setCurrentUser({ userId: data.userId, username: data.username, role: data.role || 'ADMIN' });
         setAuthenticated(true);
     };
 
@@ -427,6 +428,11 @@ function App() {
     // Show login page if not authenticated
     if (!authenticated) {
         return <Login onLogin={handleLogin} />;
+    }
+
+    // Company admin gets their own isolated layout
+    if ((currentUser?.role || getUser()?.role) === 'COMPANY_ADMIN') {
+        return <CompanyDashboard onLogout={handleLogout} />;
     }
 
     return (
