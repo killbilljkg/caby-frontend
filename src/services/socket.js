@@ -1,5 +1,11 @@
+import { getToken } from './authService';
+
 export const connectWebSocket = (url, onMessage) => {
-    const ws = new WebSocket(url);
+    const token = getToken();
+    const wsUrl = token
+        ? `${url}${url.includes('?') ? '&' : '?'}token=${encodeURIComponent(token)}`
+        : url;
+    const ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
         console.log('Connected to WebSocket server');
