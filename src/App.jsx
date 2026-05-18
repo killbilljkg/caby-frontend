@@ -80,6 +80,7 @@ function App() {
 
                 const driverId = data.driver_id || data.driverId;
                 const tripId = data.trip_id || data.tripId;
+                const driverName = data.driver_name || data.driverName;
 
                 if (selectedDriverIdRef.current && driverId === selectedDriverIdRef.current) {
                     setLocation(formattedData);
@@ -96,6 +97,9 @@ function App() {
                                 ...data,
                                 driverId,
                                 tripId,
+                                driverName: driverName || previous?.driverName,
+                                vehicleNumber: previous?.vehicleNumber,
+                                vehicleType: previous?.vehicleType,
                                 lat,
                                 lng,
                                 prevLat: previous?.lat,
@@ -172,27 +176,50 @@ function App() {
                 setLocation(validPath[validPath.length - 1]);
             }
 
-            // 2. Trip Summary
+            // 2. Trip Summary — supports both new structured response
+            //    ({ trip, driver, passenger, ... }) and legacy flat shape.
             const tripObj = auditData.trip || {};
+            const driverObj = auditData.driver || {};
+            const passengerObj = auditData.passenger || {};
 
             setTripSummary({
-                id: auditData.id || tripObj.id,
-                driverId: auditData.driverId || tripObj.driverId,
-                passengerName: auditData.passengerName || tripObj.passengerName, // Check root, then trip object
-                passengerPhoneNumber: auditData.passengerPhoneNumber || tripObj.passengerPhoneNumber,
-                fromLocation: auditData.fromLocation || tripObj.fromLocation,
-                toLocation: auditData.toLocation || tripObj.toLocation,
-                status: auditData.currentStatus || tripObj.currentStatus,
-                startTime: auditData.startTime || tripObj.startTime,
-                endTime: auditData.endTime || tripObj.endTime,
-                totalDistanceCorporate: auditData.totalDistanceCorporate || 0,
-                totalDistanceOwner: auditData.totalDistanceOwner || 0
+                id: tripObj.id || auditData.id,
+                driverId: driverObj.driverId || auditData.driverId || tripObj.driverId,
+                driverName: driverObj.name || auditData.driverName,
+                driverPhone: driverObj.phoneNumber || auditData.driverPhoneNumber,
+                vehicleNumber: driverObj.vehicleNumber || auditData.vehicleNumber,
+                vehicleType: driverObj.vehicleType || auditData.vehicleType,
+                passengerId: passengerObj.passengerId || auditData.passengerId,
+                passengerName: passengerObj.name || auditData.passengerName || tripObj.passengerName,
+                passengerPhoneNumber: passengerObj.phoneNumber || auditData.passengerPhoneNumber || tripObj.passengerPhoneNumber,
+                passengerCorporateId: passengerObj.corporateId || auditData.corporateId,
+                fromLocation: tripObj.fromLocation || auditData.fromLocation,
+                toLocation: tripObj.toLocation || auditData.toLocation,
+                status: tripObj.currentStatus || auditData.currentStatus,
+                startTime: tripObj.startTime || auditData.startTime,
+                endTime: tripObj.endTime || auditData.endTime,
+                totalDistanceCorporate: tripObj.totalDistanceCorporate ?? auditData.totalDistanceCorporate ?? 0,
+                totalDistanceOwner: tripObj.totalDistanceOwner ?? auditData.totalDistanceOwner ?? 0,
+                totalGpsDistanceKm: auditData.totalGpsDistanceKm ?? 0,
             });
 
             // Identify driver ID for selection
-            const finalDriverId = auditData.driverId || tripObj.driverId;
+            const finalDriverId = driverObj.driverId || auditData.driverId || tripObj.driverId;
             if (finalDriverId) {
                 setSelectedDriverId(finalDriverId);
+            }
+
+            // Fold driver name into the active-drivers map so map labels update.
+            if (finalDriverId && driverObj.name) {
+                setActiveDrivers(prev => ({
+                    ...prev,
+                    [finalDriverId]: {
+                        ...(prev[finalDriverId] || { driverId: finalDriverId }),
+                        driverName: driverObj.name,
+                        vehicleNumber: driverObj.vehicleNumber,
+                        vehicleType: driverObj.vehicleType,
+                    },
+                }));
             }
 
         } catch (error) {
@@ -377,25 +404,43 @@ function App() {
                                             <div>
                                                 <div className="ldp-title">
                                                     <span className="ads-dot" style={{ background: colorForDriver(selectedDriver.driverId) }} />
-                                                    Driver {selectedDriver.driverId}
+                                                    {selectedDriver.driverName || tripSummary?.driverName || `Driver ${selectedDriver.driverId}`}
                                                 </div>
-                                                <div className="ldp-sub">{selectedDriver.status || 'LIVE'}</div>
+                                                <div className="ldp-sub">
+                                                    {(tripSummary?.vehicleNumber || selectedDriver.vehicleNumber) ? `${tripSummary?.vehicleNumber || selectedDriver.vehicleNumber}${(tripSummary?.vehicleType || selectedDriver.vehicleType) ? ` · ${tripSummary?.vehicleType || selectedDriver.vehicleType}` : ''}` : (tripSummary?.status || selectedDriver.status || 'LIVE')}
+                                                </div>
                                             </div>
                                             <button className="ldp-close" onClick={() => { setShowLiveDetailPanel(false); setSelectedDriverId(null); selectedDriverIdRef.current = null; setPath([]); setLocation(null); }}>×</button>
                                         </div>
                                         <div className="ldp-body">
+                                            <div className="ldp-divider" style={{ marginTop: 0, borderTop: 0, paddingTop: 0 }}>Driver</div>
+                                            {(tripSummary?.driverName || selectedDriver.driverName) && <div className="ldp-row"><span>Name</span><b>{tripSummary?.driverName || selectedDriver.driverName}</b></div>}
+                                            {tripSummary?.driverPhone && <div className="ldp-row"><span>Phone</span><b>{tripSummary.driverPhone}</b></div>}
+                                            {(tripSummary?.vehicleNumber || selectedDriver.vehicleNumber) && <div className="ldp-row"><span>Vehicle</span><b>{tripSummary?.vehicleNumber || selectedDriver.vehicleNumber}</b></div>}
+                                            {(tripSummary?.vehicleType || selectedDriver.vehicleType) && <div className="ldp-row"><span>Type</span><b>{tripSummary?.vehicleType || selectedDriver.vehicleType}</b></div>}
+
+                                            <div className="ldp-divider">Live</div>
                                             <div className="ldp-row"><span>Position</span><b>{selectedDriver.lat?.toFixed?.(5)}, {selectedDriver.lng?.toFixed?.(5)}</b></div>
                                             {selectedDriver.speed != null && <div className="ldp-row"><span>Speed</span><b>{Math.round(selectedDriver.speed)} km/h</b></div>}
-                                            {selectedDriver.tripId && <div className="ldp-row"><span>Trip</span><b>{selectedDriver.tripId}</b></div>}
                                             {selectedDriver.lastUpdate && <div className="ldp-row"><span>Last update</span><b>{new Date(selectedDriver.lastUpdate).toLocaleTimeString()}</b></div>}
+
                                             {tripSummary && (
                                                 <>
-                                                    <div className="ldp-divider">Trip details</div>
-                                                    {tripSummary.passengerName && <div className="ldp-row"><span>Passenger</span><b>{tripSummary.passengerName}</b></div>}
-                                                    {tripSummary.passengerPhoneNumber && <div className="ldp-row"><span>Phone</span><b>{tripSummary.passengerPhoneNumber}</b></div>}
+                                                    <div className="ldp-divider">Trip</div>
+                                                    {tripSummary.status && <div className="ldp-row"><span>Status</span><b>{tripSummary.status}</b></div>}
                                                     {tripSummary.fromLocation && <div className="ldp-row"><span>From</span><b>{tripSummary.fromLocation}</b></div>}
                                                     {tripSummary.toLocation && <div className="ldp-row"><span>To</span><b>{tripSummary.toLocation}</b></div>}
-                                                    {tripSummary.status && <div className="ldp-row"><span>Status</span><b>{tripSummary.status}</b></div>}
+                                                    {tripSummary.startTime && <div className="ldp-row"><span>Started</span><b>{new Date(tripSummary.startTime).toLocaleString()}</b></div>}
+                                                    {tripSummary.totalGpsDistanceKm != null && <div className="ldp-row"><span>Distance</span><b>{tripSummary.totalGpsDistanceKm.toFixed(2)} km</b></div>}
+                                                </>
+                                            )}
+
+                                            {tripSummary?.passengerName && (
+                                                <>
+                                                    <div className="ldp-divider">Passenger</div>
+                                                    <div className="ldp-row"><span>Name</span><b>{tripSummary.passengerName}</b></div>
+                                                    {tripSummary.passengerPhoneNumber && <div className="ldp-row"><span>Phone</span><b>{tripSummary.passengerPhoneNumber}</b></div>}
+                                                    {tripSummary.passengerCorporateId && <div className="ldp-row"><span>Corp ID</span><b>{tripSummary.passengerCorporateId}</b></div>}
                                                 </>
                                             )}
                                         </div>

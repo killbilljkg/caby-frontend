@@ -194,19 +194,19 @@ const MapComponent = ({ location, path = [], drivers = null, selectedDriverId = 
                                     color,
                                     heading,
                                     selected: isSel,
-                                    label: `Driver ${d.driverId}`,
+                                    label: d.driverName || `Driver ${d.driverId}`,
                                     status: statusText,
                                 })}
                                 eventHandlers={{ click: () => onDriverClick && onDriverClick(d) }}
                                 zIndexOffset={isSel ? 1000 : 0}
                             >
-                                <Tooltip direction="top" offset={[0, -22]} opacity={0.95}>
+                                <Tooltip direction="top" offset={[0, -28]} opacity={0.95}>
                                     <div style={{ minWidth: 140 }}>
-                                        <div style={{ fontWeight: 700, color }}>Driver {d.driverId}</div>
+                                        <div style={{ fontWeight: 700, color }}>{d.driverName || `Driver ${d.driverId}`}</div>
                                         <div style={{ fontSize: 12, color: '#555' }}>
+                                            {d.vehicleNumber ? <>Vehicle: <b>{d.vehicleNumber}</b><br /></> : null}
                                             {d.status ? <>Status: <b>{d.status}</b><br /></> : null}
                                             {d.speed != null ? <>Speed: <b>{Math.round(d.speed)} km/h</b><br /></> : null}
-                                            {d.tripId ? <>Trip: <b>{d.tripId}</b></> : null}
                                         </div>
                                     </div>
                                 </Tooltip>
