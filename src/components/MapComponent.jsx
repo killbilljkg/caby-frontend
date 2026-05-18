@@ -30,25 +30,43 @@ function carDivIcon({ color, heading = 0, selected = false, label = '', status =
     const labelHtml = (label || status)
         ? `<div class="car-marker__label" style="border-color:${color}"><span>${label}</span>${status ? `<em>${status}</em>` : ''}</div>`
         : '';
+    // Top-down (overhead) car view. Front of car points UP at 0°; rotation handled by parent.
     return L.divIcon({
         html: `
             <div class="car-marker">
                 ${ring}
                 <div class="car-marker__svg" style="transform: rotate(${heading}deg);">
-                    <svg viewBox="0 0 24 24" width="34" height="34" xmlns="http://www.w3.org/2000/svg">
-                        <path fill="${color}" stroke="#111" stroke-width="0.6"
-                            d="M4.6 11l1.5-4.7A2.2 2.2 0 0 1 8.2 4.7h7.6a2.2 2.2 0 0 1 2.1 1.6L19.4 11h.3a1.5 1.5 0 0 1 0 3h-.3v2a1 1 0 0 1-1 1h-1.1a1 1 0 0 1-1-1v-1H7.7v1a1 1 0 0 1-1 1H5.6a1 1 0 0 1-1-1v-2h-.3a1.5 1.5 0 0 1 0-3h.3z"/>
-                        <rect x="8" y="6.5" width="8" height="3" rx="0.6" fill="#ffffff" opacity="0.9"/>
-                        <circle cx="7.5" cy="15" r="1.3" fill="#222"/>
-                        <circle cx="16.5" cy="15" r="1.3" fill="#222"/>
+                    <svg viewBox="0 0 36 60" width="28" height="46" xmlns="http://www.w3.org/2000/svg">
+                        <!-- side mirrors -->
+                        <rect x="0" y="20" width="5" height="4" rx="1.2" fill="${color}" stroke="#111" stroke-width="0.8"/>
+                        <rect x="31" y="20" width="5" height="4" rx="1.2" fill="${color}" stroke="#111" stroke-width="0.8"/>
+                        <!-- wheels (front + rear, visible from above) -->
+                        <rect x="2"  y="12" width="4" height="8"  rx="1.2" fill="#111"/>
+                        <rect x="30" y="12" width="4" height="8"  rx="1.2" fill="#111"/>
+                        <rect x="2"  y="40" width="4" height="8"  rx="1.2" fill="#111"/>
+                        <rect x="30" y="40" width="4" height="8"  rx="1.2" fill="#111"/>
+                        <!-- body -->
+                        <rect x="5" y="4" width="26" height="52" rx="6" ry="7" fill="${color}" stroke="#111" stroke-width="1.2"/>
+                        <!-- windshield (front, top) -->
+                        <path d="M8 14 Q18 8 28 14 L26 22 Q18 19 10 22 Z" fill="#bfdbfe" stroke="#111" stroke-width="0.6" opacity="0.95"/>
+                        <!-- rear window -->
+                        <path d="M10 46 Q18 49 26 46 L28 54 Q18 56 8 54 Z" fill="#bfdbfe" stroke="#111" stroke-width="0.6" opacity="0.85"/>
+                        <!-- roof seam -->
+                        <line x1="18" y1="24" x2="18" y2="44" stroke="#111" stroke-width="0.4" opacity="0.4"/>
+                        <!-- headlights (front - pointing up) -->
+                        <rect x="8"  y="5" width="4" height="2" rx="0.8" fill="#fffbeb" stroke="#111" stroke-width="0.4"/>
+                        <rect x="24" y="5" width="4" height="2" rx="0.8" fill="#fffbeb" stroke="#111" stroke-width="0.4"/>
+                        <!-- tail lights (rear) -->
+                        <rect x="8"  y="53" width="4" height="1.6" rx="0.6" fill="#dc2626" stroke="#111" stroke-width="0.3"/>
+                        <rect x="24" y="53" width="4" height="1.6" rx="0.6" fill="#dc2626" stroke="#111" stroke-width="0.3"/>
                     </svg>
                 </div>
                 ${labelHtml}
             </div>`,
         className: 'car-divicon',
-        iconSize: [34, 34],
-        iconAnchor: [17, 17],
-        popupAnchor: [0, -22],
+        iconSize: [28, 46],
+        iconAnchor: [14, 23],
+        popupAnchor: [0, -28],
     });
 }
 

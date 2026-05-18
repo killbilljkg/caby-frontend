@@ -9,7 +9,7 @@ import CompanyDashboard from './components/CompanyDashboard';
 import Login from './components/Login';
 import { connectWebSocket } from './services/socket';
 import { colorForDriver } from './components/MapComponent';
-import { isAuthenticated as checkAuth, getUser, logout as authLogout } from './services/authService';
+import { isAuthenticated as checkAuth, getUser, getToken, logout as authLogout } from './services/authService';
 import './App.css';
 
 function App() {
@@ -350,52 +350,10 @@ function App() {
                 };
                 return (
                     <div className="live-tracking-container" style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
-                        <aside className="active-drivers-sidebar">
-                            <div className="ads-header">
-                                <span className="ads-title">Active Drivers</span>
-                                <span className="ads-count">{driverList.length}</span>
-                            </div>
-                            <div className="ads-list">
-                                {driverList.length === 0 ? (
-                                    <p className="ads-empty">Waiting for driver pings…</p>
-                                ) : (
-                                    driverList.map((driver) => {
-                                        const isSelected = selectedDriverId === driver.driverId;
-                                        const color = colorForDriver(driver.driverId);
-                                        return (
-                                            <div
-                                                key={driver.driverId}
-                                                className={`ads-card ${isSelected ? 'ads-card--selected' : ''}`}
-                                                style={{ borderLeft: `4px solid ${color}` }}
-                                                onClick={() => onMarkerClick(driver)}
-                                            >
-                                                <div className="ads-card-top">
-                                                    <span className="ads-driver-name">
-                                                        <span className="ads-dot" style={{ background: color }} />
-                                                        Driver&nbsp;{driver.driverId}
-                                                    </span>
-                                                    <span className="ads-badge">{driver.status || 'LIVE'}</span>
-                                                </div>
-                                                <div className="ads-card-row">
-                                                    <span className="ads-icon">📍</span>
-                                                    <span className="ads-text">{driver.fromLocation || `${driver.lat?.toFixed?.(4)}, ${driver.lng?.toFixed?.(4)}`}</span>
-                                                </div>
-                                                <div className="ads-card-row">
-                                                    <span className="ads-icon">🕐</span>
-                                                    <span className="ads-text">
-                                                        {driver.lastUpdate
-                                                            ? new Date(driver.lastUpdate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-                                                            : 'Live'}
-                                                        {driver.speed != null ? ` • ${Math.round(driver.speed)} km/h` : ''}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        );
-                                    })
-                                )}
-                            </div>
-                        </aside>
                         <div className="map-view-container" style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
+                            <div className="live-driver-pill">
+                                <span className="ldp-dot-live" /> {driverList.length} active driver{driverList.length === 1 ? '' : 's'}
+                            </div>
                             <header className="app-header">
                                 <h1>Real-time Location Tracker</h1>
                                 <div className="controls">
