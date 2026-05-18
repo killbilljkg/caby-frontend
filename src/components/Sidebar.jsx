@@ -1,5 +1,5 @@
 import React from 'react';
-import { FiGrid, FiMap, FiUsers, FiUserCheck, FiClock, FiLogOut } from 'react-icons/fi';
+import { FiGrid, FiMap, FiUsers, FiUserCheck, FiClock, FiLogOut, FiBox } from 'react-icons/fi';
 import '../App.css';
 
 const Sidebar = ({ activePage, onNavigate, username, onLogout }) => {
@@ -8,6 +8,7 @@ const Sidebar = ({ activePage, onNavigate, username, onLogout }) => {
         { key: 'live-tracking', label: 'Live Tracking', icon: <FiMap /> },
         { key: 'drivers',       label: 'Drivers',       icon: <FiUsers /> },
         { key: 'assign-driver', label: 'Assign Driver', icon: <FiUserCheck /> },
+        { key: 'packages',      label: 'Packages',      icon: <FiBox /> },
         { key: 'history',       label: 'History',       icon: <FiClock /> },
     ];
 
