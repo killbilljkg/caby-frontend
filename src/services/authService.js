@@ -66,7 +66,40 @@ export function getUser() {
     try { return JSON.parse(raw); } catch (_) { return null; }
 }
 
-/** True if a token is present in storage */
+/** Decode a JWT payload (base64url → object). Returns null on failure. */
+export function decodeJwt(token) {
+    if (!token || typeof token !== 'string') return null;
+    const parts = token.split('.');
+    if (parts.length < 2) return null;
+    try {
+        const b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+        const padded = b64 + '==='.slice((b64.length + 3) % 4);
+        return JSON.parse(atob(padded));
+    } catch (_) {
+        return null;
+    }
+}
+
+/** Token expiry in ms since epoch, or null if not present/parseable. */
+export function getTokenExpiryMs() {
+    const payload = decodeJwt(getToken());
+    if (!payload || typeof payload.exp !== 'number') return null;
+    return payload.exp * 1000;
+}
+
+/** True if the stored token's `exp` claim is in the past. */
+export function isTokenExpired() {
+    const expMs = getTokenExpiryMs();
+    if (expMs == null) return false; // no exp claim → treat as non-expiring
+    return Date.now() >= expMs;
+}
+
+/** True if a non-expired token is present in storage. Clears storage if expired. */
 export function isAuthenticated() {
-    return !!getToken();
+    if (!getToken()) return false;
+    if (isTokenExpired()) {
+        logout();
+        return false;
+    }
+    return true;
 }

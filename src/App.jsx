@@ -9,7 +9,7 @@ import CompanyDashboard from './components/CompanyDashboard';
 import Login from './components/Login';
 import { connectWebSocket } from './services/socket';
 import { colorForDriver } from './components/MapComponent';
-import { isAuthenticated as checkAuth, getUser, getToken, logout as authLogout } from './services/authService';
+import { isAuthenticated as checkAuth, getUser, getToken, getTokenExpiryMs, isTokenExpired, logout as authLogout } from './services/authService';
 import './App.css';
 
 function App() {
@@ -36,6 +36,15 @@ function App() {
         selectedDriverIdRef.current = null;
         if (ws) { ws.close(); setWs(null); }
     };
+
+    // Centralised "session expired" handler — logs out and notifies once.
+    const sessionExpiredFiredRef = React.useRef(false);
+    const handleSessionExpired = () => {
+        if (sessionExpiredFiredRef.current) return;
+        sessionExpiredFiredRef.current = true;
+        handleLogout();
+        alert('Your session has expired. Please log in again.');
+    };
     // ────────────────────────────────────────────────────────────
 
     const [activePage, setActivePage] = useState(
@@ -57,12 +66,29 @@ function App() {
         selectedDriverIdRef.current = selectedDriverId;
     }, [selectedDriverId]);
 
+    // Auto-logout when JWT exp timestamp passes.
+    useEffect(() => {
+        if (!authenticated) return;
+        if (isTokenExpired()) { handleSessionExpired(); return; }
+        const expMs = getTokenExpiryMs();
+        if (!expMs) return; // no exp claim — leave the session alone
+        // setTimeout delay is clamped to int32 (~24.8 days). Re-arm via interval safety.
+        const wait = Math.min(expMs - Date.now(), 2147483000);
+        const timer = setTimeout(handleSessionExpired, Math.max(0, wait));
+        return () => clearTimeout(timer);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [authenticated]);
+
     const handleConnect = () => {
         if (ws) {
             ws.close();
             setWs(null);
             return;
         }
+
+        // Bail early if the token is already expired — the upstream
+        // would reject the handshake with 401 anyway.
+        if (isTokenExpired()) { handleSessionExpired(); return; }
 
         // Browsers cannot send custom headers on WebSocket connections;
         // pass the JWT token as a query parameter instead.
@@ -116,11 +142,14 @@ function App() {
         newWs.onclose = () => {
             setStatus('Disconnected');
             setWs(null);
+            // If the close came right after a stale token, treat as expiry.
+            if (isTokenExpired()) handleSessionExpired();
         };
         newWs.onerror = (err) => {
             // Downgrade to warn — a WS failure is non-fatal
             console.warn('WebSocket connection failed:', err);
             setStatus('Error');
+            if (isTokenExpired()) handleSessionExpired();
         };
 
         setWs(newWs);
@@ -132,7 +161,11 @@ function App() {
             return;
         }
         try {
-            const response = await fetch(`https://api-caby.story-labs.in/api/v1/audits/${tripId}`);
+            const token = getToken();
+            const response = await fetch(`https://api-caby.story-labs.in/api/v1/audits/${tripId}`, {
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+            });
+            if (response.status === 401) { handleSessionExpired(); return; }
             if (!response.ok) throw new Error("Failed to fetch trip audits");
             let auditData = await response.json();
             console.log("Trip Detail Response:", auditData);
