@@ -64,20 +64,23 @@ function App() {
             return;
         }
 
-        const newWs = connectWebSocket(socketUrl, (data) => {
-            // Map external API data (latitude/longitude) to internal format (lat/lng)
+        // Browsers cannot send custom headers on WebSocket connections;
+        // pass the JWT token as a query parameter instead.
+        const token = getToken();
+        const urlWithToken = token
+            ? `${socketUrl}?token=${encodeURIComponent(token)}`
+            : socketUrl;
+
+        const newWs = connectWebSocket(urlWithToken, (data) => {
             const lat = data.lat !== undefined ? data.lat : data.latitude;
             const lng = data.lng !== undefined ? data.lng : data.longitude;
 
             if (lat !== undefined && lng !== undefined) {
                 const formattedData = { ...data, lat, lng };
 
-                // Map snake_case to camelCase
                 const driverId = data.driver_id || data.driverId;
                 const tripId = data.trip_id || data.tripId;
 
-                // Update map ONLY if this data belongs to the selected driver
-                // Update map ONLY if this data belongs to the selected driver
                 if (selectedDriverIdRef.current && driverId === selectedDriverIdRef.current) {
                     setLocation(formattedData);
                     setPath((prevPath) => [...prevPath, formattedData]);
@@ -110,9 +113,9 @@ function App() {
             setStatus('Disconnected');
             setWs(null);
         };
-
         newWs.onerror = (err) => {
-            console.error('WebSocket Error:', err);
+            // Downgrade to warn — a WS failure is non-fatal
+            console.warn('WebSocket connection failed:', err);
             setStatus('Error');
         };
 
@@ -203,15 +206,13 @@ function App() {
         setActivePage('trip-detail');
     };
 
+    // If the app loads directly on live-tracking (e.g. page refresh), auto-connect
     useEffect(() => {
-        // Auto-connect on mount (optional, or wait for user)
-        handleConnect();
-
-        return () => {
-            if (ws) ws.close();
-        };
+        if (activePage === 'live-tracking') {
+            setTimeout(handleConnect, 0);
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []); // Run once on mount
+    }, []);
 
     const renderContent = () => {
         switch (activePage) {
@@ -476,6 +477,15 @@ function App() {
             setTripSummary(null);
             setSelectedDriverId(null);
             selectedDriverIdRef.current = null;
+            // Connect WebSocket when entering live tracking
+            if (!ws) setTimeout(handleConnect, 0);
+        } else {
+            // Disconnect WebSocket when leaving live tracking
+            if (ws) {
+                ws.close();
+                setWs(null);
+                setStatus('Disconnected');
+            }
         }
         localStorage.setItem('caby_active_page', page);
         setActivePage(page);
