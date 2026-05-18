@@ -2570,3 +2570,67 @@
     transition: background 0.15s;
 }
 .trip-back-pill:hover { background: rgba(0, 0, 0, 0.92); }
+
+/* ── Bill Modal ── */
+.bill-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+.bill-section-label {
+    margin: 0 0 0.5rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #999;
+}
+.bill-breakdown {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 0.85rem 1rem;
+    margin-bottom: 0.5rem;
+}
+.bill-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    font-size: 0.88rem;
+    color: #444;
+}
+.bill-line-label {
+    color: #555;
+}
+.bill-line-value {
+    font-weight: 600;
+    color: #111;
+}
+.bill-divider {
+    border: none;
+    border-top: 1px dashed #e0e0e0;
+    margin: 8px 0 0;
+}
+.bill-total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.65rem 1rem;
+    background: #111;
+    border-radius: 10px;
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-top: 0.25rem;
+}
+.bill-total-value {
+    font-size: 1.15rem;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+}
+.bill-generated-at {
+    margin: 0.6rem 0 0;
+    font-size: 0.75rem;
+    color: #aaa;
+    text-align: right;
+}

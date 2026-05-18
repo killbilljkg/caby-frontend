@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { FiSearch, FiEye, FiChevronDown, FiCheck } from 'react-icons/fi';
+import { FiSearch, FiEye, FiChevronDown, FiCheck, FiX, FiFileText } from 'react-icons/fi';
+import { getToken } from '../services/authService';
 import '../App.css';
+
+const API_BASE = 'https://api-caby.story-labs.in';
 
 /* Status colour map */
 const STATUS_STYLES = {
@@ -15,6 +18,126 @@ const STATUS_STYLES = {
 };
 const statusStyle = (s) => STATUS_STYLES[(s || '').toUpperCase()] || { bg: '#f3f4f6', color: '#1f2937' };
 
+const isViewable = (status) => ['END', 'COMPLETED'].includes((status || '').toUpperCase());
+
+const fmt = (n) => n != null ? `₹${Number(n).toFixed(2)}` : '—';
+
+/* ─── Bill Modal ─── */
+const BillModal = ({ tripId, audit, onClose }) => {
+    const [bill,    setBill]    = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error,   setError]   = useState('');
+
+    useEffect(() => {
+        const token = getToken();
+        fetch(`${API_BASE}/api/v1/company/trips/${tripId}/bill`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+        })
+            .then(async res => {
+                if (!res.ok) {
+                    const body = await res.json().catch(() => ({}));
+                    throw new Error(body.message || `Error ${res.status}`);
+                }
+                return res.json();
+            })
+            .then(setBill)
+            .catch(e => setError(e.message))
+            .finally(() => setLoading(false));
+    }, [tripId]);
+
+    const st = statusStyle(audit?.currentStatus);
+
+    return (
+        <div className="modal-overlay" onClick={onClose}>
+            <div
+                className="modal-content"
+                style={{ maxWidth: 480, width: '95vw' }}
+                onClick={e => e.stopPropagation()}
+            >
+                {/* Header */}
+                <div className="modal-header" style={{ borderBottom: '1px solid #f0f0f0', paddingBottom: '0.85rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                        <FiFileText size={18} style={{ color: '#111' }} />
+                        <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700 }}>Trip Bill</h3>
+                    </div>
+                    <button className="close-button" onClick={onClose}><FiX /></button>
+                </div>
+
+                {/* Trip summary strip */}
+                {audit && (
+                    <div style={{
+                        background: '#f8f9fa', borderRadius: 10, padding: '0.75rem 1rem',
+                        margin: '0.85rem 0', display: 'flex', flexDirection: 'column', gap: 4,
+                    }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontWeight: 600, fontSize: '0.92rem', color: '#111' }}>
+                                {audit.passengerName || 'Passenger'}
+                            </span>
+                            <span className="status-badge" style={{ backgroundColor: st.bg, color: st.color, fontSize: '0.73rem' }}>
+                                {audit.currentStatus}
+                            </span>
+                        </div>
+                        <span style={{ fontSize: '0.78rem', color: '#888' }}>
+                            {audit.fromLocation || '—'} → {audit.toLocation || '—'}
+                        </span>
+                    </div>
+                )}
+
+                {/* Bill body */}
+                {loading && (
+                    <div style={{ padding: '1.5rem', textAlign: 'center', color: '#888', fontSize: '0.9rem' }}>
+                        Loading bill…
+                    </div>
+                )}
+
+                {error && (
+                    <div className="error-message" style={{ margin: '0.5rem 0' }}>
+                        {error}
+                    </div>
+                )}
+
+                {bill && !loading && !error && (
+                    <div className="bill-body">
+                        {/* Breakdown */}
+                        {bill.breakdown && Object.keys(bill.breakdown).length > 0 && (
+                            <div className="bill-breakdown">
+                                <p className="bill-section-label">Breakdown</p>
+                                {Object.entries(bill.breakdown).map(([key, value]) => (
+                                    <div key={key} className="bill-line">
+                                        <span className="bill-line-label">
+                                            {key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
+                                        </span>
+                                        <span className="bill-line-value">{fmt(value)}</span>
+                                    </div>
+                                ))}
+                                <div className="bill-divider" />
+                            </div>
+                        )}
+
+                        {/* Total */}
+                        <div className="bill-total-row">
+                            <span>Total Amount</span>
+                            <span className="bill-total-value">{fmt(bill.totalAmount)}</span>
+                        </div>
+
+                        {/* Generated at */}
+                        {bill.generatedAt && (
+                            <p className="bill-generated-at">
+                                Generated: {new Date(bill.generatedAt).toLocaleString()}
+                            </p>
+                        )}
+                    </div>
+                )}
+
+                <div className="form-actions" style={{ marginTop: '0.75rem' }}>
+                    <button className="btn-secondary" onClick={onClose}>Close</button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+/* ─── Main History component ─── */
 const History = ({ onSelectTrip }) => {
     const [audits, setAudits] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -22,14 +145,20 @@ const History = ({ onSelectTrip }) => {
     const [searchTerm, setSearchTerm] = useState('');
 
     /* ── Multi-select status filter ── */
-    const [selectedStatuses, setSelectedStatuses] = useState([]); // [] = all
+    const [selectedStatuses, setSelectedStatuses] = useState([]);
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const dropdownRef = useRef(null);
+
+    /* ── Bill modal ── */
+    const [billAudit, setBillAudit] = useState(null); // the audit row whose bill is shown
 
     useEffect(() => {
         const fetchAudits = async () => {
             try {
-                const response = await fetch('https://api-caby.story-labs.in/api/v1/audits');
+                const token = getToken();
+                const response = await fetch(`${API_BASE}/api/v1/audits`, {
+                    headers: token ? { Authorization: `Bearer ${token}` } : {},
+                });
                 if (!response.ok) throw new Error('Failed to fetch audit history');
                 const data = await response.json();
                 setAudits(Array.isArray(data) ? data : []);
@@ -54,7 +183,7 @@ const History = ({ onSelectTrip }) => {
         return () => document.removeEventListener('mousedown', handler);
     }, []);
 
-    /* Unique statuses derived from fetched data */
+    /* Unique statuses from data */
     const allStatuses = useMemo(() => {
         const set = new Set(audits.map(a => (a.currentStatus || '').toUpperCase()).filter(Boolean));
         return [...set].sort();
@@ -65,17 +194,17 @@ const History = ({ onSelectTrip }) => {
             prev.includes(status) ? prev.filter(s => s !== status) : [...prev, status]
         );
     };
-
     const clearStatuses = () => setSelectedStatuses([]);
 
-    /* Combined filter: search term + selected statuses */
+    /* Combined filter */
     const filteredAudits = audits.filter(audit => {
         const term = searchTerm.toLowerCase();
         const matchesSearch = !term || (
-            (audit.driverId && audit.driverId.toLowerCase().includes(term)) ||
+            (audit.driverId    && audit.driverId.toLowerCase().includes(term))    ||
+            (audit.driverName  && audit.driverName.toLowerCase().includes(term))  ||
             (audit.passengerName && audit.passengerName.toLowerCase().includes(term)) ||
-            (audit.fromLocation && audit.fromLocation.toLowerCase().includes(term)) ||
-            (audit.toLocation && audit.toLocation.toLowerCase().includes(term))
+            (audit.fromLocation  && audit.fromLocation.toLowerCase().includes(term))  ||
+            (audit.toLocation    && audit.toLocation.toLowerCase().includes(term))
         );
         const matchesStatus = selectedStatuses.length === 0 ||
             selectedStatuses.includes((audit.currentStatus || '').toUpperCase());
@@ -103,7 +232,7 @@ const History = ({ onSelectTrip }) => {
                 <h2>Trip History</h2>
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
 
-                    {/* Multi-select status filter — left of search */}
+                    {/* Multi-select status filter */}
                     <div className="hist-filter-wrap" ref={dropdownRef}>
                         <button
                             className="hist-filter-btn"
@@ -140,10 +269,7 @@ const History = ({ onSelectTrip }) => {
                                             >
                                                 {checked && <FiCheck size={10} color="#fff" />}
                                             </span>
-                                            <span
-                                                className="hist-filter-dot"
-                                                style={{ background: st.color }}
-                                            />
+                                            <span className="hist-filter-dot" style={{ background: st.color }} />
                                             <span className="hist-filter-text">{status}</span>
                                         </div>
                                     );
@@ -193,6 +319,7 @@ const History = ({ onSelectTrip }) => {
                         ) : (
                             filteredAudits.map((audit) => {
                                 const st = statusStyle(audit.currentStatus);
+                                const canView = isViewable(audit.currentStatus);
                                 return (
                                     <tr key={audit.id} className="history-row">
                                         <td>
@@ -209,18 +336,34 @@ const History = ({ onSelectTrip }) => {
                                             </span>
                                         </td>
                                         <td>
-                                            <button
-                                                className="btn-icon"
-                                                onClick={() => onSelectTrip(audit.id)}
-                                                title={['END','COMPLETED'].includes((audit.currentStatus||'').toUpperCase()) ? 'View Details' : 'Only available for completed trips'}
-                                                disabled={!['END','COMPLETED'].includes((audit.currentStatus||'').toUpperCase())}
-                                                style={{
-                                                    color: ['END','COMPLETED'].includes((audit.currentStatus||'').toUpperCase()) ? '#333' : '#ccc',
-                                                    cursor: ['END','COMPLETED'].includes((audit.currentStatus||'').toUpperCase()) ? 'pointer' : 'not-allowed',
-                                                }}
-                                            >
-                                                <FiEye />
-                                            </button>
+                                            <div className="action-buttons">
+                                                {/* 👁 View trip detail */}
+                                                <button
+                                                    className="btn-icon"
+                                                    onClick={() => canView && onSelectTrip(audit.id)}
+                                                    title={canView ? 'View Trip Detail' : 'Only available for completed trips'}
+                                                    disabled={!canView}
+                                                    style={{
+                                                        color: canView ? '#333' : '#ccc',
+                                                        cursor: canView ? 'pointer' : 'not-allowed',
+                                                    }}
+                                                >
+                                                    <FiEye />
+                                                </button>
+                                                {/* 🧾 View bill */}
+                                                <button
+                                                    className="btn-icon"
+                                                    onClick={() => canView && setBillAudit(audit)}
+                                                    title={canView ? 'View Bill' : 'Only available for completed trips'}
+                                                    disabled={!canView}
+                                                    style={{
+                                                        color: canView ? '#1565c0' : '#ccc',
+                                                        cursor: canView ? 'pointer' : 'not-allowed',
+                                                    }}
+                                                >
+                                                    <FiFileText />
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 );
@@ -229,6 +372,15 @@ const History = ({ onSelectTrip }) => {
                     </tbody>
                 </table>
             </div>
+
+            {/* ── Bill Modal ── */}
+            {billAudit && (
+                <BillModal
+                    tripId={billAudit.id}
+                    audit={billAudit}
+                    onClose={() => setBillAudit(null)}
+                />
+            )}
         </div>
     );
 };

@@ -6,6 +6,7 @@ import History from './components/History';
 import AssignDriver from './components/AssignDriver';
 import Dashboard from './components/Dashboard';
 import CompanyDashboard from './components/CompanyDashboard';
+import Packages from './components/Packages';
 import Login from './components/Login';
 import { connectWebSocket } from './services/socket';
 import { colorForDriver } from './components/MapComponent';
@@ -280,6 +281,8 @@ function App() {
                 return <Dashboard onNavigate={handleNavigation} />;
             case 'drivers':
                 return <Drivers />;
+            case 'packages':
+                return <Packages />;
             case 'history':
                 return <History onSelectTrip={handleHistoryClick} />;
             case 'assign-driver':

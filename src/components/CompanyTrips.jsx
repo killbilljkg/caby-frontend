@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { FiEye, FiArrowLeft, FiChevronLeft, FiChevronRight, FiFilter, FiX } from 'react-icons/fi';
+import { FiEye, FiArrowLeft, FiChevronLeft, FiChevronRight, FiFilter, FiX, FiFileText } from 'react-icons/fi';
 import { getToken } from '../services/authService';
 import '../App.css';
 
@@ -21,6 +21,110 @@ const ALL_STATUSES = ['COMPLETED', 'REQUESTED', 'ACCEPTED', 'PICKUP', 'DROPOFF',
 
 const fmt = (dt) => dt ? new Date(dt).toLocaleString() : '—';
 const fmtDate = (dt) => dt ? new Date(dt).toLocaleDateString() : '—';
+const fmtCurrency = (n) => n != null ? `₹${Number(n).toFixed(2)}` : '—';
+const isBillable = (status) => ['END', 'COMPLETED'].includes((status || '').toUpperCase());
+
+/* ─────────────────── Bill Modal ─────────────────── */
+const BillModal = ({ tripId, trip, onClose }) => {
+    const [bill,    setBill]    = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error,   setError]   = useState('');
+
+    useEffect(() => {
+        const token = getToken();
+        fetch(`${API_BASE}/api/v1/company/trips/${tripId}/bill`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+        })
+            .then(async res => {
+                if (!res.ok) {
+                    const body = await res.json().catch(() => ({}));
+                    throw new Error(body.message || `Error ${res.status}`);
+                }
+                return res.json();
+            })
+            .then(setBill)
+            .catch(e => setError(e.message))
+            .finally(() => setLoading(false));
+    }, [tripId]);
+
+    const st = statusStyle(trip?.currentStatus);
+
+    return (
+        <div className="modal-overlay" onClick={onClose}>
+            <div
+                className="modal-content"
+                style={{ maxWidth: 480, width: '95vw' }}
+                onClick={e => e.stopPropagation()}
+            >
+                <div className="modal-header" style={{ borderBottom: '1px solid #f0f0f0', paddingBottom: '0.85rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                        <FiFileText size={18} style={{ color: '#111' }} />
+                        <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700 }}>Trip Bill</h3>
+                    </div>
+                    <button className="close-button" onClick={onClose}>✕</button>
+                </div>
+
+                {trip && (
+                    <div style={{
+                        background: '#f8f9fa', borderRadius: 10, padding: '0.75rem 1rem',
+                        margin: '0.85rem 0', display: 'flex', flexDirection: 'column', gap: 4,
+                    }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontWeight: 600, fontSize: '0.92rem', color: '#111' }}>
+                                {trip.passengerName || 'Passenger'}
+                            </span>
+                            <span className="status-badge" style={{ backgroundColor: st.bg, color: st.color, fontSize: '0.73rem' }}>
+                                {trip.currentStatus}
+                            </span>
+                        </div>
+                        <span style={{ fontSize: '0.78rem', color: '#888' }}>
+                            {trip.fromLocation || '—'} → {trip.toLocation || '—'}
+                        </span>
+                    </div>
+                )}
+
+                {loading && (
+                    <div style={{ padding: '1.5rem', textAlign: 'center', color: '#888', fontSize: '0.9rem' }}>
+                        Loading bill…
+                    </div>
+                )}
+                {error && <div className="error-message" style={{ margin: '0.5rem 0' }}>{error}</div>}
+
+                {bill && !loading && !error && (
+                    <div className="bill-body">
+                        {bill.breakdown && Object.keys(bill.breakdown).length > 0 && (
+                            <div className="bill-breakdown">
+                                <p className="bill-section-label">Breakdown</p>
+                                {Object.entries(bill.breakdown).map(([key, value]) => (
+                                    <div key={key} className="bill-line">
+                                        <span className="bill-line-label">
+                                            {key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
+                                        </span>
+                                        <span className="bill-line-value">{fmtCurrency(value)}</span>
+                                    </div>
+                                ))}
+                                <div className="bill-divider" />
+                            </div>
+                        )}
+                        <div className="bill-total-row">
+                            <span>Total Amount</span>
+                            <span className="bill-total-value">{fmtCurrency(bill.totalAmount)}</span>
+                        </div>
+                        {bill.generatedAt && (
+                            <p className="bill-generated-at">
+                                Generated: {new Date(bill.generatedAt).toLocaleString()}
+                            </p>
+                        )}
+                    </div>
+                )}
+
+                <div className="form-actions" style={{ marginTop: '0.75rem' }}>
+                    <button className="btn-secondary" onClick={onClose}>Close</button>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 /* ─────────────────── Milestone timeline ─────────────────── */
 const MilestoneTimeline = ({ milestones = [] }) => (
@@ -179,6 +283,9 @@ const CompanyTrips = () => {
 
     /* Detail view */
     const [selectedTripId, setSelectedTripId] = useState(null);
+
+    /* Bill modal */
+    const [billTrip, setBillTrip] = useState(null); // trip object whose bill is shown
 
     /* ── Fetch ── */
     const fetchTrips = useCallback(async (pg = 0, filters = {}) => {
@@ -350,14 +457,30 @@ const CompanyTrips = () => {
                                                 </span>
                                             </td>
                                             <td>
-                                                <button
-                                                    className="btn-icon"
-                                                    title="View Details"
-                                                    style={{ color: '#333' }}
-                                                    onClick={() => setSelectedTripId(trip.id)}
-                                                >
-                                                    <FiEye />
-                                                </button>
+                                                <div className="action-buttons">
+                                                    {/* 👁 View detail */}
+                                                    <button
+                                                        className="btn-icon"
+                                                        title="View Details"
+                                                        style={{ color: '#333' }}
+                                                        onClick={() => setSelectedTripId(trip.id)}
+                                                    >
+                                                        <FiEye />
+                                                    </button>
+                                                    {/* 🧾 View bill */}
+                                                    <button
+                                                        className="btn-icon"
+                                                        title={isBillable(trip.currentStatus) ? 'View Bill' : 'Bill available for completed trips'}
+                                                        disabled={!isBillable(trip.currentStatus)}
+                                                        style={{
+                                                            color: isBillable(trip.currentStatus) ? '#1565c0' : '#ccc',
+                                                            cursor: isBillable(trip.currentStatus) ? 'pointer' : 'not-allowed',
+                                                        }}
+                                                        onClick={() => isBillable(trip.currentStatus) && setBillTrip(trip)}
+                                                    >
+                                                        <FiFileText />
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     );
@@ -412,6 +535,15 @@ const CompanyTrips = () => {
                         </button>
                     </div>
                 </div>
+            )}
+
+            {/* ── Bill Modal ── */}
+            {billTrip && (
+                <BillModal
+                    tripId={billTrip.id}
+                    trip={billTrip}
+                    onClose={() => setBillTrip(null)}
+                />
             )}
         </div>
     );
