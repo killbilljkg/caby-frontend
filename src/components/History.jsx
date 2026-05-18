@@ -30,7 +30,7 @@ const BillModal = ({ tripId, audit, onClose }) => {
 
     useEffect(() => {
         const token = getToken();
-        fetch(`${API_BASE}/api/v1/company/trips/${tripId}/bill`, {
+        fetch(`${API_BASE}/api/v1/audits/${tripId}/bill`, {
             headers: token ? { Authorization: `Bearer ${token}` } : {},
         })
             .then(async res => {
