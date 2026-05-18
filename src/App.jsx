@@ -254,115 +254,46 @@ function App() {
             case 'trip-detail':
                 return (
                     <div className="trip-detail-container">
-                        {/* White side panel */}
-                        <aside className="active-drivers-sidebar trip-detail-sidebar">
-                            {/* Header */}
-                            <div className="ads-header">
-                                <button className="td-back-btn" onClick={() => setActivePage('history')}>
-                                    ← Back
-                                </button>
-                                <span className="ads-title">Trip Details</span>
-                            </div>
-
-                            <div className="ads-list">
-                                {tripSummary ? (
-                                    <>
-                                        {/* Passenger card */}
-                                        <div className="ads-card ads-card--selected">
-                                            <div className="ads-card-top">
-                                                <span className="ads-driver-name">
-                                                    {tripSummary.passengerName || 'Unknown Passenger'}
-                                                </span>
-                                                <span
-                                                    className="ads-badge"
-                                                    style={tripSummary.status === 'START'
-                                                        ? { color: '#166534', borderColor: '#86efac', backgroundColor: '#dcfce7' }
-                                                        : {}}
-                                                >
-                                                    {tripSummary.status || 'N/A'}
-                                                </span>
-                                            </div>
-                                            {tripSummary.passengerPhoneNumber && (
-                                                <div className="ads-card-row">
-                                                    <span className="ads-icon">📞</span>
-                                                    <span className="ads-text">{tripSummary.passengerPhoneNumber}</span>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* Driver card */}
-                                        <div className="ads-card">
-                                            <div className="ads-card-row">
-                                                <span className="ads-icon">🧑‍✈️</span>
-                                                <span className="ads-driver-name" style={{ fontSize: '0.95rem' }}>
-                                                    Driver: {tripSummary.driverId || 'N/A'}
-                                                </span>
-                                            </div>
-                                            <div className="ads-card-row">
-                                                <span className="ads-icon">🆔</span>
-                                                <span className="ads-text">Trip: {tripSummary.id || 'N/A'}</span>
-                                            </div>
-                                        </div>
-
-                                        {/* Route card */}
-                                        <div className="ads-card">
-                                            <div className="ads-card-row">
-                                                <span className="ads-icon">📍</span>
-                                                <span className="ads-text">
-                                                    <strong style={{ color: '#333' }}>From: </strong>
-                                                    {tripSummary.fromLocation || 'N/A'}
-                                                </span>
-                                            </div>
-                                            {tripSummary.startTime && (
-                                                <div className="ads-card-row" style={{ paddingLeft: 26 }}>
-                                                    <span className="ads-text" style={{ color: '#999', fontSize: '0.8rem' }}>
-                                                        {new Date(tripSummary.startTime).toLocaleString()}
-                                                    </span>
-                                                </div>
-                                            )}
-                                            <div className="ads-card-row" style={{ marginTop: 6 }}>
-                                                <span className="ads-icon">🏁</span>
-                                                <span className="ads-text">
-                                                    <strong style={{ color: '#333' }}>To: </strong>
-                                                    {tripSummary.toLocation || 'N/A'}
-                                                </span>
-                                            </div>
-                                            {tripSummary.endTime && (
-                                                <div className="ads-card-row" style={{ paddingLeft: 26 }}>
-                                                    <span className="ads-text" style={{ color: '#999', fontSize: '0.8rem' }}>
-                                                        {new Date(tripSummary.endTime).toLocaleString()}
-                                                    </span>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* Distance card */}
-                                        <div className="ads-card">
-                                            <div className="ads-card-row">
-                                                <span className="ads-icon">🛣️</span>
-                                                <span className="ads-text">
-                                                    <strong style={{ color: '#333' }}>Corp: </strong>
-                                                    {tripSummary.totalDistanceCorporate || 0} km
-                                                </span>
-                                            </div>
-                                            <div className="ads-card-row">
-                                                <span className="ads-icon">📏</span>
-                                                <span className="ads-text">
-                                                    <strong style={{ color: '#333' }}>Owner: </strong>
-                                                    {tripSummary.totalDistanceOwner || 0} km
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </>
-                                ) : (
-                                    <p className="ads-empty">No trip data available.</p>
-                                )}
-                            </div>
-                        </aside>
-
-                        {/* Map */}
-                        <div className="trip-detail-map">
+                        <div className="trip-detail-map" style={{ position: 'relative', height: '100%', width: '100%' }}>
+                            <button className="trip-back-pill" onClick={() => setActivePage('history')}>← Back</button>
                             <MapComponent location={location} path={path} />
+                            {tripSummary && (
+                                <div className="live-detail-panel">
+                                    <div className="ldp-header" style={{ borderBottomColor: '#3b82f6' }}>
+                                        <div>
+                                            <div className="ldp-title">{tripSummary.passengerName || 'Trip Details'}</div>
+                                            <div className="ldp-sub">{tripSummary.status || 'N/A'}</div>
+                                        </div>
+                                    </div>
+                                    <div className="ldp-body">
+                                        <div className="ldp-divider" style={{ marginTop: 0, borderTop: 0, paddingTop: 0 }}>Driver</div>
+                                        {tripSummary.driverName && <div className="ldp-row"><span>Name</span><b>{tripSummary.driverName}</b></div>}
+                                        {tripSummary.driverPhone && <div className="ldp-row"><span>Phone</span><b>{tripSummary.driverPhone}</b></div>}
+                                        {tripSummary.vehicleNumber && <div className="ldp-row"><span>Vehicle</span><b>{tripSummary.vehicleNumber}</b></div>}
+                                        {tripSummary.vehicleType && <div className="ldp-row"><span>Type</span><b>{tripSummary.vehicleType}</b></div>}
+                                        {!tripSummary.driverName && tripSummary.driverId && <div className="ldp-row"><span>Driver ID</span><b>{tripSummary.driverId}</b></div>}
+
+                                        <div className="ldp-divider">Trip</div>
+                                        {tripSummary.id && <div className="ldp-row"><span>Trip ID</span><b>{tripSummary.id}</b></div>}
+                                        {tripSummary.fromLocation && <div className="ldp-row"><span>From</span><b>{tripSummary.fromLocation}</b></div>}
+                                        {tripSummary.toLocation && <div className="ldp-row"><span>To</span><b>{tripSummary.toLocation}</b></div>}
+                                        {tripSummary.startTime && <div className="ldp-row"><span>Started</span><b>{new Date(tripSummary.startTime).toLocaleString()}</b></div>}
+                                        {tripSummary.endTime && <div className="ldp-row"><span>Ended</span><b>{new Date(tripSummary.endTime).toLocaleString()}</b></div>}
+                                        {tripSummary.totalGpsDistanceKm != null && <div className="ldp-row"><span>GPS distance</span><b>{tripSummary.totalGpsDistanceKm.toFixed(2)} km</b></div>}
+                                        {tripSummary.totalDistanceCorporate != null && <div className="ldp-row"><span>Corp</span><b>{tripSummary.totalDistanceCorporate} km</b></div>}
+                                        {tripSummary.totalDistanceOwner != null && <div className="ldp-row"><span>Owner</span><b>{tripSummary.totalDistanceOwner} km</b></div>}
+
+                                        {tripSummary.passengerName && (
+                                            <>
+                                                <div className="ldp-divider">Passenger</div>
+                                                <div className="ldp-row"><span>Name</span><b>{tripSummary.passengerName}</b></div>
+                                                {tripSummary.passengerPhoneNumber && <div className="ldp-row"><span>Phone</span><b>{tripSummary.passengerPhoneNumber}</b></div>}
+                                                {tripSummary.passengerCorporateId && <div className="ldp-row"><span>Corp ID</span><b>{tripSummary.passengerCorporateId}</b></div>}
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 );
